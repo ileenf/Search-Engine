@@ -4,10 +4,10 @@ from tokenizer import parse_text, tokenize
 import os
 import json
 
-inverted_index = defaultdict(list)
 directory = './DEV'
 
 def build_index():
+    inverted_index = defaultdict(list)
     for domain in os.scandir(directory):  # each subdir = web domain
         if domain.is_dir():
             for page in os.scandir(domain.path):  # each file within subdir = webpage
@@ -21,6 +21,7 @@ def build_index():
 
                         for token, count in token_mapping.items():
                             inverted_index[token].append(Posting(json_data['url'], count, total_tokens))
+    return inverted_index
 
 def write_index_to_file(inverted_index):
     file = open('index.txt', 'w')
