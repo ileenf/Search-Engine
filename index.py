@@ -6,8 +6,6 @@ import json
 
 #directory = './DEV'
 
-DEBUG = True
-
 def build_index(base_dir):
     cur_docID = 0
 
@@ -22,37 +20,17 @@ def build_index(base_dir):
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content = parse_text(content) # bsoup to parse html into a string of tokens
-                        
-                        if DEBUG:
-                            print(json_data['url'] + '---')
+
                         token_mapping = Counter(tokenize(parsed_content))
                         total_tokens = sum(token_mapping.values())
 
-                        
-
-                        for token, count in token_mapping.items():
-                            
-                            p = Posting(cur_docID, count, total_tokens)
-                            inverted_index[token].append(p)
-
-                        if DEBUG:
-                            print(f"<docID={p.get_docID()}, url={json_data['url']}>")
-
-                        
-    if DEBUG:
-        print("================Finished building index.=============")
-
+                        for token, count in token_mapping.items(): 
+                            inverted_index[token].append(Posting(cur_docID, count, total_tokens))
     return inverted_index
 
 def write_index_to_file(inverted_index):
-    if DEBUG:
-        print("================Writing index.=============")
-
     file = open('index.txt', 'w')
     for token in sorted(inverted_index):            # sort by keys
-        if DEBUG:
-            print(f"Writing: {token}")
-
         file.write(token + ": ")
         for posting in inverted_index[token]:
             posting_json = json.dumps(posting.__dict__)
@@ -60,6 +38,3 @@ def write_index_to_file(inverted_index):
         file.write('\n')
 
     file.close()
-
-    if DEBUG:
-        print("================Finished writing index.=============")
