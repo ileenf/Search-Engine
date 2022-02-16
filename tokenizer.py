@@ -33,7 +33,7 @@ def tokenize(string) -> [str]:
     ps = PorterStemmer()
     tokens = []
     try:
-        words = re.findall(r"[a-zA-Z0-9]+(?:[':-][a-zA-Z0-9]+)*", string)
+        words = re.findall(r"[a-zA-Z0-9]+", string)
         for word in words:
             tokens.append(ps.stem(word.lower()))     
         return tokens
