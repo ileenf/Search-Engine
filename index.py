@@ -3,9 +3,9 @@ from Posting import Posting
 from tokenizer import parse_text, tokenize
 import os
 import json
+import psutil
 
 #directory = './DEV'
-
 
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
@@ -22,13 +22,23 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str)->dict:
+def build_index(base_dir: str, batch_sz: int, mem_threshold: int)->dict:
+    # retrieve batch of corpus (50 docs?)
+    # create posting list
+    # if mem < 50%, retrieve another batch 
+    # else, dump
+    # clear dict
+
+    cur_batchsz = batch_sz
+    pindex_num = 1
     cur_docID = 0
     inverted_index = defaultdict(list)
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
+                    cur_batchsz -= 1
+
                     with open(page.path) as file:
                         cur_docID += 1
                         json_data = json.loads(file.read())
@@ -39,10 +49,21 @@ def build_index(base_dir: str)->dict:
                         total_tokens = sum(token_mapping.values())
                         for token, count in token_mapping.items(): 
                             inverted_index[token].append(Posting(cur_docID, count, total_tokens))
+                
+                # after parsing page, check if done with batch
+                if cur_batchsz <= 0:
+                    mem = psutil.Process().memory_percent() # type of mem defaults to rss (physical memory aka RAM)
+                    print(f'MEMORY USED: {mem}')
+                    if mem > mem_threshold:                            # past threshold, so dump
+                        write_pindex(inverted_index, pindex_num)
+                        pindex_num += 1
+                else:
+
     return inverted_index
 
-def write_index_to_file(inverted_index: dict):
-    file = open(f'index.txt', 'w')
+
+def write_pindex(inverted_index: dict, pindex_num: int):
+    file = open(f'index{pindex_num}.txt', 'w')
     posting_string = ''
     for token in sorted(inverted_index):                            # sort by keys
         print(token)
