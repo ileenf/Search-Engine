@@ -3,27 +3,28 @@ from Posting import Posting
 from tokenizer import parse_text, tokenize
 import os
 import json
-import psutil
 
 #directory = './DEV'
 
-def build_partial_index(base_dir: str, batch_sz: int)->dict:
-    pass
+
+def build_id_url_map(base_dir: str)->dict:
+    cur_docID = 0
+    id_url_map = dict()
+    for domain in os.scandir(base_dir):  # each subdir = web domain
+        if domain.is_dir():
+            for page in os.scandir(domain.path):  # each file within subdir = webpage
+                if page.is_file():
+                    
+                    with open(page.path) as file:
+                        cur_docID += 1
+                        json_data = json.loads(file.read())
+                        id_url_map[cur_docID] = json_data['url'] 
+
+    return id_url_map
 
 def build_index(base_dir: str, batch_sz: int)->dict:
-    pindex_num = 1
     cur_docID = 0
-    #doc_id_url_map = dict()
     inverted_index = defaultdict(list)
-
-    # retrieve batch of corpus (50 docs?)
-    # create posting list
-    # if mem < 50%, retrieve another batch 
-    # else, dump
-    # clear dict
-
-###################################
-
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
@@ -40,8 +41,6 @@ def build_index(base_dir: str, batch_sz: int)->dict:
                             inverted_index[token].append(Posting(cur_docID, count, total_tokens))
     return inverted_index
 
-
-
 def write_index_to_file(inverted_index: dict):
     file = open(f'index.txt', 'w')
     for token in sorted(inverted_index):                            # sort by keys
@@ -50,7 +49,6 @@ def write_index_to_file(inverted_index: dict):
             posting_json = json.dumps(posting.__dict__)
             file.write(posting_json)
         file.write('\n')
-
     file.close()
 
 def write_id_url_map(id_url_map:dict):
