@@ -22,7 +22,7 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz: int, mem_threshold: int)->dict:
+def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
     # retrieve batch of corpus (50 docs?)
     # create posting list
     # if mem < 50%, retrieve another batch 
@@ -43,7 +43,7 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int)->dict:
                         cur_docID += 1
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        parsed_content = parse_text(content) # bsoup to parse html into a string of tokens
+                        parsed_content = parse_text(content)                                # bsoup to parse html into a string of tokens
 
                         token_mapping = Counter(tokenize(parsed_content))
                         total_tokens = sum(token_mapping.values())
@@ -52,22 +52,22 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int)->dict:
                 
                 # after parsing page, check if done with batch
                 if cur_batchsz <= 0:
-                    mem = psutil.Process().memory_percent() # type of mem defaults to rss (physical memory aka RAM)
+                    cur_batchsz = batch_sz
+                    mem = psutil.Process().memory_percent()                                 # type of mem defaults to rss (physical memory aka RAM)
                     print(f'MEMORY USED: {mem}')
-                    if mem > mem_threshold:                            # past threshold, so dump
+
+                    if mem > mem_threshold:                                                 # past threshold, so dump
                         write_pindex(inverted_index, pindex_num)
                         pindex_num += 1
-                else:
-
-    return inverted_index
+                        inverted_index.clear()
 
 
 def write_pindex(inverted_index: dict, pindex_num: int):
-    file = open(f'index{pindex_num}.txt', 'w')
+    file = open(f'~/CS121/HW3/rsrc/index{pindex_num}.txt', 'w')
     posting_string = ''
-    for token in sorted(inverted_index):                            # sort by keys
+    for token in sorted(inverted_index):                                 # sort by keys
         print(token)
-        posting_string += f'{token}| {len(inverted_index[token])}| '     # token, termdocfreq:
+        posting_string += f'{token}|{len(inverted_index[token])}|'     # token, termdocfreq:
         for posting in inverted_index[token]:
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
@@ -79,4 +79,4 @@ def write_pindex(inverted_index: dict, pindex_num: int):
 def write_id_url_map(id_url_map:dict):
     with open('id_url_map.txt', 'w') as file:
         for id, url in id_url_map.items():
-            file.write(f'{id}: {url}\n')
+            file.write(f'{id}:{url}\n')
