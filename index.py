@@ -32,11 +32,14 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
     cur_batchsz = batch_sz
     pindex_num = 1
     cur_docID = 0
+    idx_docfirst = 1
+    
     inverted_index = defaultdict(list)
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
+                    print(cur_docID)
                     cur_batchsz -= 1
 
                     with open(page.path) as file:
@@ -57,16 +60,16 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
                     print(f'MEMORY USED: {mem}')
 
                     if mem > mem_threshold:                                                 # past threshold, so dump
-                        write_pindex(inverted_index, pindex_num)
+                        write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
                         pindex_num += 1
                         inverted_index.clear()
+                        idx_docfirst = cur_docID + 1 # reset docfirst
 
 
-def write_pindex(inverted_index: dict, pindex_num: int):
-    file = open(f'~/CS121/HW3/rsrc/index{pindex_num}.txt', 'w')
+def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
+    file = open(f'../rsrc/index{doc_first}-{doc_last}.txt', 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                 # sort by keys
-        print(token)
         posting_string += f'{token}|{len(inverted_index[token])}|'     # token, termdocfreq:
         for posting in inverted_index[token]:
             posting_json = json.dumps(posting.__dict__)

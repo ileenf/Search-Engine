@@ -2,9 +2,9 @@ from tokenizer import tokenize
 import json
 from collections import defaultdict
 
-def search(query):
+def search(query: str, index_file: str):
     query_words = tokenize(query)
-    tokens_to_postings = open('tester.txt')
+    tokens_to_postings = open(index_file)
 
     query_words_set = set(query_words)
     seen_postings = defaultdict(int)
@@ -30,9 +30,9 @@ def search(query):
             intersection.append(posting_id)
     return intersection
 
-def get_doc_id_to_url_map():
+def get_doc_id_to_url_map(path: str):
     doc_id_to_url = dict()
-    with open('id_url_map.txt') as file:
+    with open(path) as file:
         lines = file.readlines()
     for line in lines:
         line = line.split(':', 1)
@@ -45,11 +45,21 @@ def get_doc_id_to_url_map():
 def display_urls(posting_intersection, doc_id_to_url):
     for doc_id in posting_intersection[:5]:
         url = doc_id_to_url[str(doc_id)]
-        print(url.strip())
+        print('\t'+url.strip())
 
 
 if __name__ == '__main__':
-    query = input('Enter search: ')
-    posting_intersection = search(query)
-    doc_id_to_url = get_doc_id_to_url_map()
-    display_urls(posting_intersection, doc_id_to_url)
+    idurlmap_path= 'id_url_map.txt'
+    index_path = 'index.txt'
+    doc_id_to_url = get_doc_id_to_url_map(idurlmap_path)
+
+    queries1 = ['cristina lopes', 'machine learning', 'ACM', "master of software engineering"]
+
+    # query = input('Enter search: ')
+
+    for q in queries1:
+        posting_intersection = search(q, index_path)
+        print(f'Query = "{q}"')
+        print(f'Results:')
+        display_urls(posting_intersection, doc_id_to_url)
+        print("------------------------------------------------------------------------------------")
