@@ -1,12 +1,15 @@
 from tokenizer import tokenize
 import json
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 def search(query):
     query_words = tokenize(query)
-    tokens_to_postings = open('tester.txt')
+    tokens_to_postings = open('fixed_index.txt')
 
     query_words_set = set(query_words)
+
+    # query_words_count = Counter(query_words)
+    # doc_freq_map = dict()
     seen_postings = defaultdict(int)
 
     for line in tokens_to_postings:
@@ -17,6 +20,7 @@ def search(query):
         freq = line[1]
         posting_strs = line[2]
         if token in query_words_set:
+            # doc_freq_map[token] = len(posting_strs.split('|'))
             query_words_set.remove(token)
             for posting in posting_strs.split('|'):
                 posting = json.loads(posting)
@@ -28,7 +32,27 @@ def search(query):
     for posting_id, count in seen_postings.items():
         if count == len(query_words):
             intersection.append(posting_id)
-    return intersection
+
+    ### check if only one term
+    if len(query_words_set) == 1:
+        return intersection
+    ###
+
+    # query_ltc_ranking(query_words_count, doc_freq_map)
+    # curr_k = k - 1
+    # while len(intersection) < k, else...
+        # can use seen_postings, since doc id is mapped to the number of tokens
+        # for doc_id, freq in seen_postings.items():
+            # if freq == curr_k:
+                # append doc_id to intersection
+        # curr_k decrement
+    # doc_func(intersection)
+    # get mapping of doc ranking
+    # iterate and save score of each term in a dict
+    # for term in query_dict:
+    #          if term in doc_dict:
+    #                  total_score += score
+    # heapify mapping and get top k
 
 def get_doc_id_to_url_map():
     doc_id_to_url = dict()
