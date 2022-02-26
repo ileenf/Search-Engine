@@ -47,7 +47,7 @@ def build_index(base_dir: str)->dict:
 def write_index_to_file(inverted_index: dict):
     file = open(f'index.txt', 'w')
     posting_string = ''
-    for token in sorted(inverted_index):                            # sort by keys
+    for token in sorted(inverted_index):                                # sort by keys
         posting_string += f'{token}|{len(inverted_index[token])}| '     # token, termdocfreq:
         for posting in inverted_index[token]:
             posting_json = json.dumps(posting.__dict__)
