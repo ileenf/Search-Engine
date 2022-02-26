@@ -42,7 +42,7 @@ def build_index(base_dir: str)->dict:
     return inverted_index
 
 def write_index_to_file(inverted_index: dict):
-    file = open(f'index.txt', 'w')
+    file = open('fixed_index.txt', 'w')
     posting_string = ''
     for token in sorted(inverted_index):                            # sort by keys
         print(token)
