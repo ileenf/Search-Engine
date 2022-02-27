@@ -9,7 +9,7 @@ def parse_text(html: str) -> [str]:
     ''' given an html string, pulls text from the following tags:
         <p>, <h1/2/3/4/5/6>, <strong>, <i>, <b>, <u>, <title>, <meta name="author"/"description"/"keywords">
     '''
-    parsed_str = ' '
+    parsed_str = ''
     tags = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "i", "b", "u", "title"]
     soup = BeautifulSoup(html, 'html.parser')
 
