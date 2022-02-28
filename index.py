@@ -39,7 +39,7 @@ def build_index(base_dir: str)->dict:
                         cur_docID += 1
 
                         debug_print(f"{cur_docID}: {page.path}")
-                        if cur_docID == 60:
+                        if cur_docID == 300:
                             return doc_to_tokens
 
                         json_data = json.loads(file.read())
@@ -72,7 +72,7 @@ def write_id_url_map(id_url_map:dict):
             file.write(f'{id}:{url}\n')
 
 def write_doc_to_tokens_map(doc_to_tokens:dict):
-    with open('doc_to_tfwts.txt', 'w') as file:
+    with open('doc_to_tf.txt', 'w') as file:
         for docID in doc_to_tokens:
             file.write(f'{docID}:')
             tkn_str = ''
