@@ -24,7 +24,7 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz=100, mem_threshold=57):
+def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
     # retrieve batch of corpus (100 docs?)
     # create posting list
     # if mem < 50%, retrieve another batch 
@@ -59,23 +59,18 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57):
                 # after parsing page, check if done with batch
                 if cur_batchsz <= 0:
                     cur_batchsz = batch_sz
-                    mem = psutil.virtual_memory()[2]         # index 2 = the percent field
+                    mem = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2         # index 2 = the percent field
                     print(f'RAM % MEMORY USED: {psutil.virtual_memory()[2]}')
 
 
                     # other way to do it: check the size of the dasta structure. 
                     idx_sz = sys.getsizeof(inverted_index) 
-                    mb_threshold = 127
                     print(f"Size of inverted_index: {idx_sz}")
-                    if cur_docID ==18464:
-                        with open('inv_index_threshold.txt', 'w') as f:
-                            f.write(f'Inv_index size after processing 18464/55393 docs = {idx_sz}')
-                    # 1310824
-                    # 147568
 
-                    if mem > mem_threshold:                                                 # past threshold, so dump
+                    if idx_sz > idx_size_threshold:                                                 # past threshold, so dump
                         write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
                         inverted_index.clear()
+                        printf("after clearing, size of inv_index = {idx_sz}")
                         idx_docfirst = cur_docID + 1 # reset docfirst
 
 
@@ -96,3 +91,7 @@ def write_id_url_map(id_url_map:dict):
     with open('id_url_map.txt', 'w') as file:
         for id, url in id_url_map.items():
             file.write(f'{id}:{url}\n')
+
+
+def merge_pindexes(num_pindexes, path):
+    pass
