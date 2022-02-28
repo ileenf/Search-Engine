@@ -7,6 +7,7 @@ import psutil
 import sys
 
 #directory = './DEV'
+DEBUG = True
 
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
@@ -39,6 +40,9 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57):
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
+                    if DEBUG:
+                        print(cur_docID)
+
                     with open(page.path) as file:
                         cur_docID += 1
                         cur_batchsz -= 1
