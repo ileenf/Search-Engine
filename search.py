@@ -1,15 +1,15 @@
 from tokenizer import tokenize
 import json
 from collections import defaultdict, Counter
+from ranking import tf_rank_top_k, tfidf_rank_top_k
 
-def search(query):
-    query_words = tokenize(query)
+def search(query_words, k):
     tokens_to_postings = open('fixed_index.txt')
 
     query_words_set = set(query_words)
 
-    # query_words_count = Counter(query_words)
-    # doc_freq_map = dict()
+    doc_freq_map = dict()
+    token_freq_map = dict()
     seen_postings = defaultdict(int)
 
     for line in tokens_to_postings:
@@ -20,11 +20,12 @@ def search(query):
         freq = line[1]
         posting_strs = line[2]
         if token in query_words_set:
-            # doc_freq_map[token] = len(posting_strs.split('|'))
+            doc_freq_map[token] = freq
             query_words_set.remove(token)
             for posting in posting_strs.split('|'):
                 posting = json.loads(posting)
                 posting_id = posting['_docId']
+                token_freq_map[posting_id] = posting['_token_count']
                 seen_postings[posting_id] += 1
     tokens_to_postings.close()
 
@@ -33,26 +34,19 @@ def search(query):
         if count == len(query_words):
             intersection.append(posting_id)
 
-    ### check if only one term
     if len(query_words_set) == 1:
-        return intersection
-    ###
+        # token_freq_map: doc_id mapped to token count
+        return intersection, True, token_freq_map
 
-    # query_ltc_ranking(query_words_count, doc_freq_map)
-    # curr_k = k - 1
-    # while len(intersection) < k, else...
+    curr_k = k - 1
+    while len(intersection) < k and curr_k > 0:
         # can use seen_postings, since doc id is mapped to the number of tokens
-        # for doc_id, freq in seen_postings.items():
-            # if freq == curr_k:
-                # append doc_id to intersection
-        # curr_k decrement
-    # doc_func(intersection)
-    # get mapping of doc ranking
-    # iterate and save score of each term in a dict
-    # for term in query_dict:
-    #          if term in doc_dict:
-    #                  total_score += score
-    # heapify mapping and get top k
+        for doc_id, freq in seen_postings.items():
+            if freq == curr_k:
+                intersection.append(doc_id)
+        curr_k -= 1
+    # doc_freq_map: each query word mapped to num of documents
+    return intersection, False, doc_freq_map
 
 def get_doc_id_to_url_map():
     doc_id_to_url = dict()
@@ -67,13 +61,21 @@ def get_doc_id_to_url_map():
 
 
 def display_urls(posting_intersection, doc_id_to_url):
-    for doc_id in posting_intersection[:5]:
+    for doc_id in posting_intersection:
         url = doc_id_to_url[str(doc_id)]
         print(url.strip())
 
 
 if __name__ == '__main__':
-    query = input('Enter search: ')
-    posting_intersection = search(query)
-    doc_id_to_url = get_doc_id_to_url_map()
-    display_urls(posting_intersection, doc_id_to_url)
+    k = 10
+    while True:
+        query = input('Enter search: ')
+        query_words = tokenize(query)
+
+        posting_intersection, is_one_word, freq_map = search(query_words, 10)
+        doc_id_to_url = get_doc_id_to_url_map()
+        if is_one_word:
+            top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
+        else:
+            top_k_doc_ids = tfidf_rank_top_k(Counter(query_words), k, freq_map, posting_intersection)
+        display_urls(top_k_doc_ids, doc_id_to_url)
