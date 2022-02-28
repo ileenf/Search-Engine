@@ -67,7 +67,10 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57):
                     idx_sz = sys.getsizeof(inverted_index) 
                     mb_threshold = 127
                     print(f"Size of inverted_index: {idx_sz}")
-                    #1310824
+                    if cur_docID ==18464:
+                        with open('inv_index_threshold.txt', 'w') as f:
+                            f.write(f'Inv_index size after processing 18464/55393 docs = {idx_sz}')
+                    # 1310824
                     # 147568
 
                     if mem > mem_threshold:                                                 # past threshold, so dump
