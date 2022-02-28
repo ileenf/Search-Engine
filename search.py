@@ -2,6 +2,7 @@ from tokenizer import tokenize
 import json
 from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k
+import time
 
 def search(query_words, k):
     tokens_to_postings = open('fixed_index.txt')
@@ -20,7 +21,7 @@ def search(query_words, k):
         freq = line[1]
         posting_strs = line[2]
         if token in query_words_set:
-            doc_freq_map[token] = freq
+            doc_freq_map[token] = int(freq)
             query_words_set.remove(token)
             for posting in posting_strs.split('|'):
                 posting = json.loads(posting)
@@ -70,6 +71,7 @@ if __name__ == '__main__':
     k = 10
     while True:
         query = input('Enter search: ')
+        start_time = time.time()
         query_words = tokenize(query)
 
         posting_intersection, is_one_word, freq_map = search(query_words, 10)
@@ -79,3 +81,4 @@ if __name__ == '__main__':
         else:
             top_k_doc_ids = tfidf_rank_top_k(Counter(query_words), k, freq_map, posting_intersection)
         display_urls(top_k_doc_ids, doc_id_to_url)
+        print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
