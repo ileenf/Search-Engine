@@ -4,6 +4,7 @@ from tokenizer import parse_text, tokenize
 import os
 import json
 import psutil
+import sys
 
 #directory = './DEV'
 
@@ -22,15 +23,14 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
-    # retrieve batch of corpus (50 docs?)
+def build_index(base_dir: str, batch_sz=100, mem_threshold=57):
+    # retrieve batch of corpus (100 docs?)
     # create posting list
     # if mem < 50%, retrieve another batch 
     # else, dump
     # clear dict
 
     cur_batchsz = batch_sz
-    pindex_num = 1
     cur_docID = 0
     idx_docfirst = 1
     
@@ -39,11 +39,10 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
-                    print(cur_docID)
-                    cur_batchsz -= 1
-
                     with open(page.path) as file:
                         cur_docID += 1
+                        cur_batchsz -= 1
+                        print(cur_docID)
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content = parse_text(content)                                # bsoup to parse html into a string of tokens
@@ -56,12 +55,19 @@ def build_index(base_dir: str, batch_sz: int, mem_threshold: int):
                 # after parsing page, check if done with batch
                 if cur_batchsz <= 0:
                     cur_batchsz = batch_sz
-                    mem = psutil.Process().memory_percent()                                 # type of mem defaults to rss (physical memory aka RAM)
-                    print(f'MEMORY USED: {mem}')
+                    mem = psutil.virtual_memory()[2]         # index 2 = the percent field
+                    print(f'RAM % MEMORY USED: {psutil.virtual_memory()[2]}')
+
+
+                    # other way to do it: check the size of the dasta structure. 
+                    idx_sz = sys.getsizeof(inverted_index) 
+                    mb_threshold = 127
+                    print(f"Size of inverted_index: {idx_sz}")
+                    #1310824
+                    # 147568
 
                     if mem > mem_threshold:                                                 # past threshold, so dump
                         write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
-                        pindex_num += 1
                         inverted_index.clear()
                         idx_docfirst = cur_docID + 1 # reset docfirst
 
