@@ -61,3 +61,17 @@ def write_id_url_map(id_url_map:dict):
     with open('id_url_map.txt', 'w') as file:
         for id, url in id_url_map.items():
             file.write(f'{id}:{url}\n')
+
+def index_of_index(index):
+    index_file = open(index)
+    token_to_position = dict()
+
+    curr_position = 0
+    line = index_file.readline().strip()
+    while line != '':
+        token = line.split('|', 1)[0]
+        token_to_position[token] = curr_position
+        curr_position = index_file.tell()
+        line = index_file.readline().strip()
+
+    return token_to_position
