@@ -37,7 +37,6 @@ def build_index(base_dir: str)->dict:
                 if page.is_file():
                     with open(page.path) as file:
                         cur_docID += 1
-
                         debug_print(f"{cur_docID}: {page.path}")
 
                         json_data = json.loads(file.read())
@@ -72,10 +71,6 @@ def write_id_url_map(id_url_map:dict):
 def write_doc_to_tokens_map(doc_to_tokens:dict):
     with open('doc_to_tf.txt', 'w') as file:
         for docID in doc_to_tokens:
-            file.write(f'{docID}:')
-            tkn_str = ''
-            for token, token_freq in doc_to_tokens[docID].items():
-                tkn_str += json.dumps((token, token_freq)) + '|'
-            # remove the last |
-            tkn_str = tkn_str[:-1]     
+            file.write(f'{docID}|')
+            tkn_str = json.dumps(doc_to_tokens[docID])
             file.write(tkn_str + '\n')
