@@ -1,4 +1,5 @@
 from collections import defaultdict, Counter
+from operator import invert
 from Posting import Posting
 from tokenizer import parse_text, tokenize
 import os
@@ -24,7 +25,7 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
+def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=2621552):
     # retrieve batch of corpus (100 docs?)
     # create posting list
     # if mem < 50%, retrieve another batch 
@@ -38,12 +39,17 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
     inverted_index = defaultdict(list)
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
+            if not inverted_index:
+                inverted_index = defaultdict(list)
+
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
                     if DEBUG:
                         print(cur_docID)
 
                     with open(page.path) as file:
+                        if not inverted_index:
+                            inverted_index = defaultdict(list)
                         cur_docID += 1
                         cur_batchsz -= 1
                         print(cur_docID)
@@ -64,13 +70,20 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
 
 
                     # other way to do it: check the size of the dasta structure. 
+                    # sizeof isn't accurate because memory doesn't get released when we delete items in python
                     idx_sz = sys.getsizeof(inverted_index) 
+                    # 2621552 at 1/3
+                    # 589936
                     print(f"Size of inverted_index: {idx_sz}")
 
+                    # delete the inverted index every time????
+                    # run it once to see how large the inv_index gets at the end on main. then divide by 3 and use that as the limit
+
+                    # if cur_docID - idx_docfirst + 1 > 18464:
                     if idx_sz > idx_size_threshold:                                                 # past threshold, so dump
                         write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
-                        inverted_index.clear()
-                        printf("after clearing, size of inv_index = {idx_sz}")
+                        inverted_index = None
+                        sys.stderr.write("after clearing, size of inv_index = {idx_sz}")
                         idx_docfirst = cur_docID + 1 # reset docfirst
 
 
@@ -91,7 +104,3 @@ def write_id_url_map(id_url_map:dict):
     with open('id_url_map.txt', 'w') as file:
         for id, url in id_url_map.items():
             file.write(f'{id}:{url}\n')
-
-
-def merge_pindexes(num_pindexes, path):
-    pass
