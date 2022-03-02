@@ -63,14 +63,23 @@ def write_index_to_file(inverted_index: dict):
         posting_string = ''
     file.close()
 
-def write_id_url_map(id_url_map:dict):
-    with open('id_url_map.txt', 'w') as file:
-        for id, url in id_url_map.items():
-            file.write(f'{id}:{url}\n')
+def index_of_index(index):
+    index_file = open(index)
+    token_to_position = dict()
 
-def write_doc_to_tokens_map(doc_to_tokens:dict):
-    with open('doc_to_tf.txt', 'w') as file:
-        for docID in doc_to_tokens:
-            file.write(f'{docID}|')
-            tkn_str = json.dumps(doc_to_tokens[docID])
-            file.write(tkn_str + '\n')
+    curr_position = 0
+    line = index_file.readline().strip()
+    while line != '':
+        token = line.split('|', 1)[0]
+        token_to_position[token] = curr_position
+        curr_position = index_file.tell()
+        line = index_file.readline().strip()
+
+    index_file.close()
+    return token_to_position
+
+# use for id_url_map, and two seek indexes
+def write_mapping_to_file(file, index):
+    with open(file, 'w') as index_file:
+        for term, value in index.items():
+            index_file.write(f'{term}|{value}\n')
