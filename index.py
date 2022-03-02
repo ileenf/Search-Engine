@@ -57,11 +57,6 @@ def write_index_to_file(inverted_index: dict):
         posting_string = ''
     file.close()
 
-def write_id_url_map(id_url_map:dict):
-    with open('id_url_map.txt', 'w') as file:
-        for id, url in id_url_map.items():
-            file.write(f'{id}:{url}\n')
-
 def index_of_index(index):
     index_file = open(index)
     token_to_position = dict()
@@ -74,4 +69,11 @@ def index_of_index(index):
         curr_position = index_file.tell()
         line = index_file.readline().strip()
 
+    index_file.close()
     return token_to_position
+
+# use for id_url_map, and two seek indexes
+def write_mapping_to_file(file, index):
+    with open(file, 'w') as index_file:
+        for term, value in index.items():
+            index_file.write(f'{term}|{value}\n')

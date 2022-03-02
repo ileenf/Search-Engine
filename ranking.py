@@ -34,22 +34,14 @@ def query_ltc_ranking(query_terms: dict, doc_freq_map: dict):
 
     return normalized_scores
 
-
-def get_doc_to_tfwt(doc_id, doc_to_tf_opened_file) -> '<token: tfwt>':
+def get_doc_to_tfwt(doc_id, doc_to_tf_opened_file, doc_id_to_position) -> '<token: tfwt>':
     ''' retrieve all the tf_wts for a doc'''
-    token_freq_dict = dict()
-    for line in doc_to_tf_opened_file:
-        line = line.split(':', 1)
-        if line[0] == str(doc_id):
-            # do some sort of dbug check here?
-            if line[1].strip() == '':
-                break
-
-            for entry in line[1].split('|'):
-                entry = json.loads(entry)
-                token_freq_dict[entry[0]] = calc_tf_wt(entry[1])
-            break
-    return token_freq_dict
+    seek_position = doc_id_to_position[str(doc_id)]
+    doc_to_tf_opened_file.seek(seek_position)
+    line = doc_to_tf_opened_file.readline()
+    token_freq = line.split('|')[1]
+    token_freq = json.loads(token_freq)
+    return token_freq
 
 def doc_lnc_ranking(query_words, doc_term_weights)->"{str: int}":
     ''' (lnc = Logarithm, No idf, Cosine n'lization)
@@ -77,7 +69,7 @@ def get_k_largest(scores, k):
 
     return k_largest_doc_ids
 
-def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids):
+def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_position):
     query_and_doc_ranking = []
 
     # gets mapping of query term to score
@@ -88,7 +80,7 @@ def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids):
 
     for doc_id in doc_ids:
         # get weights of token of curr doc
-        doc_term_weights = get_doc_to_tfwt(doc_id, doc_to_token_freq_file)
+        doc_term_weights = get_doc_to_tfwt(doc_id, doc_to_token_freq_file, doc_id_to_position)
         # gives mapping of tokens in document to score
         doc_scores = doc_lnc_ranking(query_words_count.keys(), doc_term_weights)
         total_score = 0
@@ -111,6 +103,3 @@ def tf_rank_top_k(doc_ids, token_freq_map, k):
 
     k_largest_doc_ids = get_k_largest(query_scores, k)
     return k_largest_doc_ids
-
-if __name__ == '__main__':
-    tfidf_rank_top_k({'car':1, 'best':1, 'insurance':1}, 1, {'car':10000, 'best':50000, 'insurance':1000, 'auto': 5000}, [1])
