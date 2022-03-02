@@ -80,8 +80,10 @@ if __name__ == '__main__':
     doc_id_to_position = get_index_of_index('index_of_doc_to_tf.txt')
     index_of_tokens_to_postings = get_index_of_index('index_of_main_index.txt')
     tokens_to_postings = open('fixed_index.txt')
-    while True:
-        query = input('Enter search: ')
+
+    query = input('Enter search: ')
+    while query != '':
+        
         start_time = time.time()
         query_words = tokenize(query)
 
@@ -94,5 +96,7 @@ if __name__ == '__main__':
             top_k_doc_ids = tfidf_rank_top_k(Counter(query_words), k, freq_map, posting_intersection, doc_id_to_position)
         display_urls(top_k_doc_ids, doc_id_to_url)
         print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
+
+        query = input('Enter search: ')
 
     tokens_to_postings.close()
