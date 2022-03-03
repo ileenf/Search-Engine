@@ -33,7 +33,7 @@ def get_next_token_and_docfreq(open_file):
     return next_token, next_docfreq
 
 
-def merge_pindexes(base_dir, final_index_path='final_index.txt'):
+def merge_pindexes(base_dir, final_index_path='merged_index.txt'):
 # (pathname, opened file)
     file_arr = []
 
