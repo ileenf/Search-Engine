@@ -48,9 +48,9 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
     # doc_freq_map: each query word mapped to num of documents
     return intersection, False, doc_freq_map
 
-def get_doc_id_to_url_map(path: str):
+def get_doc_id_to_url_map():
     doc_id_to_url = dict()
-    with open(path) as file:
+    with open('id_url_map.txt') as file:
         lines = file.readlines()
     for line in lines:
         line = line.split(':', 1)
@@ -72,7 +72,7 @@ def get_index_of_index(file):
 def display_urls(posting_intersection, doc_id_to_url):
     for doc_id in posting_intersection:
         url = doc_id_to_url[str(doc_id)]
-        print('\t'+url.strip())
+        print(url.strip())
 
 
 if __name__ == '__main__':
