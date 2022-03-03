@@ -27,7 +27,7 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=2621552):
+def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
     # retrieve batch of corpus (100 docs?)
     # create posting list
     # if mem < 50%, retrieve another batch 
@@ -39,7 +39,7 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
     idx_docfirst = 1
     
     inverted_index = defaultdict(list)
-    doc_to_tokens = dict()
+    # doc_to_tokens = dict()
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -73,8 +73,11 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
                     # other way to do it: check the size of the dasta structure. 
                     # sizeof isn't accurate because memory doesn't get released when we delete items in python
                     idx_sz = sys.getsizeof(inverted_index) 
-                    # 2621552 at 1/3
-                    # 589936
+                    # 5242984 at 42220 docs
+                    # 2621552 at 1/3 -- only dumped twice
+                    # 1310824
+                    # 589936 -- dumped more than 10 times
+
                     print(f"Size of inverted_index: {idx_sz}")
 
                     # delete the inverted index every time????
@@ -84,8 +87,11 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
                     if idx_sz > idx_size_threshold:                                                 # past threshold, so dump
                         write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
                         inverted_index = None
-                        sys.stderr.write("after clearing, size of inv_index = {idx_sz}")
+                        sys.stderr.write(f"after clearing, size of inv_index = {idx_sz}")
                         idx_docfirst = cur_docID + 1 # reset docfirst
+
+    # dump one last time
+    write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
 
 
 def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
