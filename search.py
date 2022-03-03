@@ -4,31 +4,30 @@ from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k
 import time
 
-def search(query_words, k):
-    tokens_to_postings = open('fixed_index.txt')
-
+def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
     query_words_set = set(query_words)
 
     doc_freq_map = dict()
     token_freq_map = dict()
     seen_postings = defaultdict(int)
 
-    for line in tokens_to_postings:
-        if not query_words_set:
-            break
+    for word in query_words_set:
+        if word not in index_of_tokens_to_postings:
+            continue
+        seek_position = index_of_tokens_to_postings[word]
+        tokens_to_postings.seek(seek_position)
+        line = tokens_to_postings.readline()
         line = line.split('|', 2)
         token = line[0]
         freq = line[1]
         posting_strs = line[2]
-        if token in query_words_set:
-            doc_freq_map[token] = int(freq)
-            query_words_set.remove(token)
-            for posting in posting_strs.split('|'):
-                posting = json.loads(posting)
-                posting_id = posting['_docId']
-                token_freq_map[posting_id] = posting['_token_count']
-                seen_postings[posting_id] += 1
-    tokens_to_postings.close()
+
+        doc_freq_map[token] = int(freq)
+        for posting in posting_strs.split('|'):
+            posting = json.loads(posting)
+            posting_id = posting['_docId']
+            token_freq_map[posting_id] = posting['_token_count']
+            seen_postings[posting_id] += 1
 
     intersection = []
     for posting_id, count in seen_postings.items():
@@ -61,6 +60,15 @@ def get_doc_id_to_url_map(path: str):
     return doc_id_to_url
 
 
+def get_index_of_index(file):
+    doc_id_to_position = dict()
+    with open(file) as file:
+        for line in file:
+            line = line.split('|')
+            doc_id_to_position[line[0]] = int(line[1])
+
+    return doc_id_to_position
+
 def display_urls(posting_intersection, doc_id_to_url):
     for doc_id in posting_intersection:
         url = doc_id_to_url[str(doc_id)]
@@ -69,16 +77,26 @@ def display_urls(posting_intersection, doc_id_to_url):
 
 if __name__ == '__main__':
     k = 10
-    while True:
-        query = input('Enter search: ')
+    doc_id_to_position = get_index_of_index('index_of_doc_to_tf.txt')
+    index_of_tokens_to_postings = get_index_of_index('index_of_main_index.txt')
+    tokens_to_postings = open('fixed_index.txt')
+
+    query = input('Enter search: ')
+    while query != '':
+        
         start_time = time.time()
         query_words = tokenize(query)
 
-        posting_intersection, is_one_word, freq_map = search(query_words, 10)
+        posting_intersection, is_one_word, freq_map = search(query_words, 10, tokens_to_postings, index_of_tokens_to_postings)
+        print(len(posting_intersection))
         doc_id_to_url = get_doc_id_to_url_map()
         if is_one_word:
             top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
         else:
-            top_k_doc_ids = tfidf_rank_top_k(Counter(query_words), k, freq_map, posting_intersection)
+            top_k_doc_ids = tfidf_rank_top_k(Counter(query_words), k, freq_map, posting_intersection, doc_id_to_position)
         display_urls(top_k_doc_ids, doc_id_to_url)
         print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
+
+        query = input('Enter search: ')
+
+    tokens_to_postings.close()

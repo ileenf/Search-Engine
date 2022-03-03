@@ -1,5 +1,4 @@
 from collections import defaultdict, Counter
-from operator import invert
 from Posting import Posting
 from tokenizer import parse_text, tokenize
 import os
@@ -9,6 +8,9 @@ import sys
 
 #directory = './DEV'
 DEBUG = True
+def debug_print(s):
+    if DEBUG:
+        print(s)
 
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
@@ -37,6 +39,8 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
     idx_docfirst = 1
     
     inverted_index = defaultdict(list)
+    doc_to_tokens = dict()
+
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
             if not inverted_index:
@@ -44,9 +48,6 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
 
             for page in os.scandir(domain.path):    # each file within subdir = webpage
                 if page.is_file():
-                    if DEBUG:
-                        print(cur_docID)
-
                     with open(page.path) as file:
                         if not inverted_index:
                             inverted_index = defaultdict(list)
@@ -100,7 +101,23 @@ def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
         posting_string = ''
     file.close()
 
-def write_id_url_map(id_url_map:dict):
-    with open('id_url_map.txt', 'w') as file:
-        for id, url in id_url_map.items():
-            file.write(f'{id}:{url}\n')
+def index_of_index(index):
+    index_file = open(index)
+    token_to_position = dict()
+
+    curr_position = 0
+    line = index_file.readline().strip()
+    while line != '':
+        token = line.split('|', 1)[0]
+        token_to_position[token] = curr_position
+        curr_position = index_file.tell()
+        line = index_file.readline().strip()
+
+    index_file.close()
+    return token_to_position
+
+# use for id_url_map, and two seek indexes
+def write_mapping_to_file(file, index):
+    with open(file, 'w') as index_file:
+        for term, value in index.items():
+            index_file.write(f'{term}|{value}\n')
