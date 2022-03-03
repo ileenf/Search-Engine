@@ -6,10 +6,14 @@ import os
 import json
 
 #directory = './DEV'
-DEBUG = True
-def debug_print(s):
-    if DEBUG:
-        print(s)
+# DEBUG = True
+# def debug_print(s):
+#     if DEBUG:
+#         print(s)
+headers_weight = 2
+meta_content_weight = 1.75
+emphasis_weight = 1.5
+paragraph_weight = 1
 
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
@@ -29,7 +33,7 @@ def build_id_url_map(base_dir: str)->dict:
 def build_index(base_dir: str)->dict:
     cur_docID = 0
     inverted_index = defaultdict(list)
-    doc_to_tokens = dict()
+    # doc_to_tokens = dict()
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -37,18 +41,31 @@ def build_index(base_dir: str)->dict:
                 if page.is_file():
                     with open(page.path) as file:
                         cur_docID += 1
-                        debug_print(f"{cur_docID}: {page.path}")
-
+                        # debug_print(f"{cur_docID}: {page.path}")
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        parsed_content = parse_text(content)                # bsoup to parse html into a string of tokens
+                        parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
                         token_mapping = Counter(tokenize(parsed_content))
-                        # total_tokens = sum(token_mapping.values())
-                        # for token, count in token_mapping.items():          # inverted index
-                        #     inverted_index[token].append(Posting(cur_docID, count, total_tokens))
-                        doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping    
-    # return inverted_index
-    return doc_to_tokens
+                        total_tokens = sum(token_mapping.values())
+                        for token, count in token_mapping.items():          # inverted index
+                            weighted_count = 0
+                            if weighted_tags['headers'] and token in weighted_tags['headers']:
+                                weighted_count += (weighted_tags['headers'][token] * headers_weight)
+                            if weighted_tags['meta_content'] and token in weighted_tags['meta_content']:
+                                weighted_count += (weighted_tags['meta_content'][token] * meta_content_weight)
+                            if weighted_tags['emphasis'] and token in weighted_tags['emphasis']:
+                                weighted_count += (weighted_tags['emphasis'][token] * emphasis_weight)
+                            if weighted_tags['paragraph'] and token in weighted_tags['paragraph']:
+                                weighted_count += (weighted_tags['paragraph'][token] * paragraph_weight)
+                            inverted_index[token].append(Posting(cur_docID, weighted_count, total_tokens))
+                            print('-------------')
+                            print('TOKEN', token)
+                            print('OLD COUNT:', count)
+                            print('NEW COUNT:', weighted_count)
+                            print('-------------')
+                        # doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
+    return inverted_index
+    # return doc_to_tokens
 
 def write_index_to_file(inverted_index: dict):
     file = open('fixed_index.txt', 'w')
