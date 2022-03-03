@@ -27,19 +27,12 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
-    # retrieve batch of corpus (100 docs?)
-    # create posting list
-    # if mem < 50%, retrieve another batch 
-    # else, dump
-    # clear dict
-
+def build_pindexes(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
     cur_batchsz = batch_sz
     cur_docID = 0
     idx_docfirst = 1
     
     inverted_index = defaultdict(list)
-    # doc_to_tokens = dict()
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -53,7 +46,7 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
                             inverted_index = defaultdict(list)
                         cur_docID += 1
                         cur_batchsz -= 1
-                        print(cur_docID)
+                        debug_print(f'{cur_docID}: {page.path}')
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content = parse_text(content)                                # bsoup to parse html into a string of tokens
@@ -66,28 +59,14 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
                 # after parsing page, check if done with batch
                 if cur_batchsz <= 0:
                     cur_batchsz = batch_sz
-                    mem = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2         # index 2 = the percent field
-                    print(f'RAM % MEMORY USED: {psutil.virtual_memory()[2]}')
-
-
-                    # other way to do it: check the size of the dasta structure. 
-                    # sizeof isn't accurate because memory doesn't get released when we delete items in python
                     idx_sz = sys.getsizeof(inverted_index) 
-                    # 5242984 at 42220 docs
-                    # 2621552 at 1/3 -- only dumped twice
-                    # 1310824
-                    # 589936 -- dumped more than 10 times
+                    debug_print(f'RAM % MEMORY USED: {psutil.virtual_memory()[2]}')
+                    debug_print(f"Size of inverted_index: {idx_sz}")
 
-                    print(f"Size of inverted_index: {idx_sz}")
-
-                    # delete the inverted index every time????
-                    # run it once to see how large the inv_index gets at the end on main. then divide by 3 and use that as the limit
-
-                    # if cur_docID - idx_docfirst + 1 > 18464:
-                    if idx_sz > idx_size_threshold:                                                 # past threshold, so dump
+                    # dump partial index to file
+                    if idx_sz > idx_size_threshold:                                                 
                         write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
                         inverted_index = None
-                        sys.stderr.write(f"after clearing, size of inv_index = {idx_sz}")
                         idx_docfirst = cur_docID + 1 # reset docfirst
 
     # dump one last time
@@ -95,10 +74,11 @@ def build_index(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshol
 
 
 def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
+    ''' helper function to be called in build_pindexes'''
     file = open(f'../rsrc/index{doc_first}-{doc_last}.txt', 'w')
     posting_string = ''
-    for token in sorted(inverted_index):                                 # sort by keys
-        posting_string += f'{token}|{len(inverted_index[token])}|'     # token, termdocfreq:
+    for token in sorted(inverted_index):                                # sort by keys
+        posting_string += f'{token}|{len(inverted_index[token])}|'      # token, termdocfreq:
         for posting in inverted_index[token]:
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
