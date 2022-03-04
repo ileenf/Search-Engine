@@ -11,6 +11,10 @@ def debug_print(s):
     if DEBUG:
         print(s)
 
+def build_champion_lists(index_file: str)->dict:
+    with open(index_file) as f:
+        pass
+
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
     id_url_map = dict()
