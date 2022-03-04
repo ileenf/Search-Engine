@@ -9,7 +9,7 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
 
     doc_freq_map = dict()
     token_freq_map = dict()
-    seen_postings = defaultdict(int)
+    num_query_terms_in_doc = defaultdict(int)
 
     for word in query_words_set:
         if word not in index_of_tokens_to_postings:
@@ -27,10 +27,10 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
             posting = json.loads(posting)
             posting_id = posting['_docId']
             token_freq_map[posting_id] = posting['_token_count']
-            seen_postings[posting_id] += 1
+            num_query_terms_in_doc[posting_id] += 1      
 
     intersection = []
-    for posting_id, count in seen_postings.items():
+    for posting_id, count in num_query_terms_in_doc.items():
         if count == len(query_words):
             intersection.append(posting_id)
 
@@ -40,8 +40,8 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
 
     curr_k = k - 1
     while len(intersection) < k and curr_k > 0:
-        # can use seen_postings, since doc id is mapped to the number of tokens
-        for doc_id, freq in seen_postings.items():
+        # can use num_query_terms_in_doc, since doc id is mapped to the number of tokens
+        for doc_id, freq in num_query_terms_in_doc.items():
             if freq == curr_k:
                 intersection.append(doc_id)
         curr_k -= 1
