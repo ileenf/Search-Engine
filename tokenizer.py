@@ -15,12 +15,12 @@ def parse_text(html: str) -> [str]:
 
     header_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "title"]
     emphasis_tags = ["strong", "i", "b", "u"]
-    p_tags = ["p"]
+    text_tags = ["p", "div"]
     soup = BeautifulSoup(html, 'html.parser')
 
     header_tags_text = soup.find_all(header_tags)
     emphasis_tags_text = soup.find_all(emphasis_tags)
-    p_tags_text = soup.find_all(p_tags)
+    text_tags_text = soup.find_all(text_tags)
     meta_text = soup.find_all(name="meta", attrs={"name": re.compile(r'^(author|description|keywords)$')})
 
     if header_tags_text:
@@ -37,8 +37,8 @@ def parse_text(html: str) -> [str]:
                 tags_to_text['emphasis'] += tokenized_text
                 parsed_str += t.text + ' '
 
-    if p_tags_text:
-        for t in p_tags_text:
+    if text_tags_text:
+        for t in text_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
                 tags_to_text['paragraph'] += tokenized_text
