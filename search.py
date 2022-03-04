@@ -29,17 +29,23 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, r=50
         start_idx = 0
 
         # grab up to the top r highest tf for each query term
+        # counter
         for posting in plist[start_idx:num_postings_to_grab]: 
             posting = json.loads(posting)
             posting_id = posting['_docId']
             token_freq_map[posting_id] = posting['_token_count']
             doc_to_num_query_terms[posting_id] += 1
 
+    intersection = []
+    for posting_id, count in doc_to_num_query_terms.items():
+        if count == len(query_words):
+            # pull the one with the highest tf
+            intersection.append(posting_id)
+
     if len(query_words_set) == 1:
         # token_freq_map: doc_id mapped to token count
-        return doc_to_num_query_terms.keys(), True, token_freq_map
+        return intersection, True, token_freq_map
 
-    intersection = []
     curr_freq = len(query_words_set)
     while len(intersection) < k and curr_freq > 0:
         # can use doc_to_num_query_terms, since doc id is mapped to the number of tokens
