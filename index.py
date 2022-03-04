@@ -47,7 +47,7 @@ def build_index(base_dir: str)->dict:
                         parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
                         token_mapping = Counter(tokenize(parsed_content))
                         total_tokens = sum(token_mapping.values())
-                        for token, count in token_mapping.items():          # inverted index
+                        for token in token_mapping:          # inverted index
                             weighted_count = 0
                             if weighted_tags['headers'] and token in weighted_tags['headers']:
                                 weighted_count += (weighted_tags['headers'][token] * headers_weight)
