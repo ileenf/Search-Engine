@@ -58,11 +58,6 @@ def build_index(base_dir: str)->dict:
                             if weighted_tags['paragraph'] and token in weighted_tags['paragraph']:
                                 weighted_count += (weighted_tags['paragraph'][token] * paragraph_weight)
                             inverted_index[token].append(Posting(cur_docID, weighted_count, total_tokens))
-                            print('-------------')
-                            print('TOKEN', token)
-                            print('OLD COUNT:', count)
-                            print('NEW COUNT:', weighted_count)
-                            print('-------------')
                         # doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
     return inverted_index
     # return doc_to_tokens
