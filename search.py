@@ -1,4 +1,4 @@
-from tokenizer import tokenize
+from tokenizer import tokenize, tokenize_two_grams
 import json
 from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k
@@ -79,16 +79,23 @@ if __name__ == '__main__':
     k = 10
     doc_id_to_position = get_index_of_index('index_of_doc_to_tf.txt')
     index_of_tokens_to_postings = get_index_of_index('index_of_main_index.txt')
+    index_of_two_grams = get_index_of_index('index_of_2_gram_index.txt')
     tokens_to_postings = open('fixed_index.txt')
+    two_grams_to_postings = open('2_gram_index.txt')
 
     query = input('Enter search: ')
     while query != '':
         
         start_time = time.time()
         query_words = tokenize(query)
+        two_gram_query_words = tokenize_two_grams(query_words)
 
-        posting_intersection, is_one_word, freq_map = search(query_words, 10, tokens_to_postings, index_of_tokens_to_postings)
+        two_grams_intersection, is_one_word, freq_map = search(two_gram_query_words, k, two_grams_to_postings, index_of_two_grams)
+        print(len(two_grams_intersection))
+        if len(two_grams_intersection) < k:
+            posting_intersection, is_one_word, freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings)
         print(len(posting_intersection))
+
         doc_id_to_url = get_doc_id_to_url_map()
         if is_one_word:
             top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
