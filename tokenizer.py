@@ -19,38 +19,40 @@ def parse_text(html: str) -> [str]:
     soup = BeautifulSoup(html, 'html.parser')
 
     header_tags_text = soup.find_all(header_tags)
-    emphasis_tags_text = soup.find(emphasis_tags)
+    emphasis_tags_text = soup.find_all(emphasis_tags)
     p_tags_text = soup.find_all(p_tags)
-
     meta_text = soup.find_all(name="meta", attrs={"name": re.compile(r'^(author|description|keywords)$')})
 
-    for t in header_tags_text:
-        if t.text.strip() != '':
-            tokenized_text = tokenize(t.text)
-            tags_to_text['headers'] += tokenized_text
-            parsed_str += t.text + ' '
+    if header_tags_text:
+        for t in header_tags_text:
+            if t.text.strip() != '':
+                tokenized_text = tokenize(t.text)
+                tags_to_text['headers'] += tokenized_text
+                parsed_str += t.text + ' '
 
-    for t in emphasis_tags_text:
-        if t.text.strip() != '':
-            tokenized_text = tokenize(t.text)
-            tags_to_text['emphasis'] += tokenized_text
-            parsed_str += t.text + ' '
+    if emphasis_tags_text:
+        for t in emphasis_tags_text:
+            if t.text.strip() != '':
+                tokenized_text = tokenize(t.text)
+                tags_to_text['emphasis'] += tokenized_text
+                parsed_str += t.text + ' '
 
-    for t in p_tags_text:
-        if t.text.strip() != '':
-            tokenized_text = tokenize(t.text)
-            tags_to_text['paragraph'] += tokenized_text
-            parsed_str += t.text + ' '
+    if p_tags_text:
+        for t in p_tags_text:
+            if t.text.strip() != '':
+                tokenized_text = tokenize(t.text)
+                tags_to_text['paragraph'] += tokenized_text
+                parsed_str += t.text + ' '
 
-    for m in meta_text:
-        if m.has_attr("content") and m["content"].strip() != '':
-            tokenized_text = tokenize(m["content"])
-            tags_to_text['meta_content'] += tokenized_text
-            parsed_str += m["content"] + ' '
+    if meta_text:
+        for m in meta_text:
+            if m.has_attr("content") and m["content"].strip() != '':
+                tokenized_text = tokenize(m["content"])
+                tags_to_text['meta_content'] += tokenized_text
+                parsed_str += m["content"] + ' '
 
     for tag, tokens in tags_to_text.items():
         tags_to_text[tag] = Counter(tokens)
-    print('FINAL DICT', dict(tags_to_text))
     return parsed_str, tags_to_text
 
 def tokenize(string) -> [str]:
