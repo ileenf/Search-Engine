@@ -11,10 +11,6 @@ def debug_print(s):
     if DEBUG:
         print(s)
 
-def build_champion_lists(index_file: str)->dict:
-    with open(index_file) as f:
-        pass
-
 def build_id_url_map(base_dir: str)->dict:
     cur_docID = 0
     id_url_map = dict()
@@ -57,9 +53,9 @@ def build_index(base_dir: str)->dict:
 def write_index_to_file(inverted_index: dict):
     file = open('fixed_index.txt', 'w')
     posting_string = ''
-    for token in sorted(inverted_index):                                # sort by keys
-        posting_string += f'{token}|{len(inverted_index[token])}| '     # token, termdocfreq:
-        for posting in inverted_index[token]:
+    for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
+        posting_string += f'{token}|{len(inverted_index[token])}| '                                       # token, termdocfreq:
+        for posting in sorted(inverted_index[token], key=(lambda p: -p.__token_count)):                   # sort posting list by descending tf
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
         posting_string = posting_string.strip('|')
