@@ -38,13 +38,13 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings):
         # token_freq_map: doc_id mapped to token count
         return intersection, True, token_freq_map
 
-    curr_k = k - 1
-    while len(intersection) < k and curr_k > 0:
-        # can use num_query_terms_in_doc, since doc id is mapped to the number of tokens
+    curr_freq = len(query_words_set)
+    while len(intersection) < k and curr_freq > 0:
+        # can use seen_postings, since doc id is mapped to the number of tokens
         for doc_id, freq in num_query_terms_in_doc.items():
-            if freq == curr_k:
+            if freq == curr_freq:
                 intersection.append(doc_id)
-        curr_k -= 1
+        curr_freq -= 1
     # doc_freq_map: each query word mapped to num of documents
     return intersection, False, doc_freq_map
 
