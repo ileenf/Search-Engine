@@ -42,6 +42,10 @@ def build_index(base_dir: str)->dict:
                     with open(page.path) as file:
                         cur_docID += 1
                         # debug_print(f"{cur_docID}: {page.path}")
+
+                        if cur_docID > 20:
+                            return inverted_index
+
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
@@ -62,12 +66,12 @@ def build_index(base_dir: str)->dict:
     return inverted_index
     # return doc_to_tokens
 
-def write_index_to_file(inverted_index: dict):
-    file = open('fixed_index.txt', 'w')
+def write_index_to_file(inverted_index: dict, filename='fixed_index.txt'):
+    file = open(filename, 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
         posting_string += f'{token}|{len(inverted_index[token])}| '                                       # token, termdocfreq:
-        for posting in sorted(inverted_index[token], key=(lambda p: -p.__token_count)):                   # sort posting list by descending tf
+        for posting in sorted(inverted_index[token], key=(lambda p: (-p._token_count, p._docId))):                   # sort posting list by descending tf
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
         posting_string = posting_string.strip('|')
