@@ -21,10 +21,11 @@ def query_ltc_ranking(query_terms: dict, doc_freq_map: dict):
     normalized_scores = dict()
 
     for term, term_freq in query_terms.items():
-        term_freq_weight = 1 + math.log10(term_freq)
-        inverted_doc_freq = math.log10(55393/doc_freq_map[term])
-        score_weight = term_freq_weight * inverted_doc_freq
-        term_to_score[term] = score_weight
+        if term in doc_freq_map:
+            term_freq_weight = 1 + math.log10(term_freq)
+            inverted_doc_freq = math.log10(55393/doc_freq_map[term])
+            score_weight = term_freq_weight * inverted_doc_freq
+            term_to_score[term] = score_weight
 
     cosine_similarity = calculate_cosine_similarity(term_to_score.values())
     for term, score in term_to_score.items():
