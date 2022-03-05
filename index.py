@@ -29,25 +29,23 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str)->dict:
+def build_index(base_dir: str):
     cur_docID = 0
     inverted_index = defaultdict(list)
-    # doc_to_tokens = dict()
+    doc_to_tokens = dict()
     two_grams = defaultdict(list)
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
             for page in os.scandir(domain.path):    # each file within subdir = webpage
-                if page.is_file() and cur_docID < 20:
+                if page.is_file():
                     with open(page.path) as file:
                         cur_docID += 1
-                        # debug_print(f"{cur_docID}: {page.path}")
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
                         tokens = tokenize(parsed_content)
                         token_mapping = Counter(tokens)
-                        total_tokens = sum(token_mapping.values())
                         for token, count in token_mapping.items():          # inverted index
                             weighted_count = 0
                             if weighted_tags['headers'] and token in weighted_tags['headers']:
@@ -59,17 +57,14 @@ def build_index(base_dir: str)->dict:
                             if weighted_tags['paragraph'] and token in weighted_tags['paragraph']:
                                 weighted_count += (weighted_tags['paragraph'][token] * paragraph_weight)
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
-                        # doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
+                        doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
 
                         two_gram_tokens = tokenize_two_grams(tokens)
                         two_gram_counts = Counter(two_gram_tokens)
-                        for two_gram, count in two_gram_counts.items():
+                        for two_gram, count in two_gram_counts.items():         # 2gram index
                             two_grams[two_gram].append(Posting(cur_docID, count))
-                        print(two_grams)
 
-    return two_grams
-    # return inverted_index
-    # return doc_to_tokens
+    return inverted_index, doc_to_tokens, two_grams
 
 # use for 'fixed_index.txt' and '2_gram_index'
 def write_index_to_file(inverted_index: dict, index_file):
