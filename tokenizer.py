@@ -10,8 +10,7 @@ def parse_text(html: str) -> [str]:
     ''' given an html string, pulls text from the following tags:
         <p>, <h1/2/3/4/5/6>, <strong>, <i>, <b>, <u>, <title>, <meta name="author"/"description"/"keywords">
     '''
-    parsed_str = ''
-    tags_to_text = defaultdict(list)
+    field_tf_map = defaultdict(list)
 
     header_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "title"]
     emphasis_tags = ["strong", "i", "b", "u"]
@@ -27,33 +26,35 @@ def parse_text(html: str) -> [str]:
         for t in header_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['headers'] += tokenized_text
-                parsed_str += t.text + ' '
+                field_tf_map['headers'] += tokenized_text
 
     if emphasis_tags_text:
         for t in emphasis_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['emphasis'] += tokenized_text
-                parsed_str += t.text + ' '
+                field_tf_map['emphasis'] += tokenized_text
 
     if p_tags_text:
         for t in p_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['paragraph'] += tokenized_text
-                parsed_str += t.text + ' '
+                field_tf_map['paragraph'] += tokenized_text
+
 
     if meta_text:
         for m in meta_text:
             if m.has_attr("content") and m["content"].strip() != '':
                 tokenized_text = tokenize(m["content"])
-                tags_to_text['meta_content'] += tokenized_text
-                parsed_str += m["content"] + ' '
+                field_tf_map['meta_content'] += tokenized_text
+    
+    for tag, tokens in field_tf_map.items():
+        field_tf_map[tag] = Counter(tokens)
 
-    for tag, tokens in tags_to_text.items():
-        tags_to_text[tag] = Counter(tokens)
-    return parsed_str, tags_to_text
+    # field_map: {meta_content: {every token that appeared in meta_content: how many times it occurred},
+    #                paragraph:    {every token that appeared in paragraphs: how many times it occurred},
+    #                etc. }
+
+    return field_tf_map
 
 def tokenize(string) -> [str]:
     '''
