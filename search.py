@@ -80,7 +80,7 @@ if __name__ == '__main__':
     index_of_doc_to_tf = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
     index_of_doc_to_tf_2grams = get_index_of_index('lexicons/index_of_doc_to_tf_2grams.txt')
 
-    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_main_index.txt')
+    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_inverted_index.txt')
     index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
