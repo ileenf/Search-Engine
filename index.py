@@ -26,8 +26,7 @@ def calc_weighted_tf_by_doc(field_tf_map, weight_adjusted=False) -> dict():
     tf_map = defaultdict(int)
     for field, field_to_tfs_counter in field_tf_map.items():
         for token, freq in field_to_tfs_counter.items():
-            if weight_adjusted:  
-                print(weight_adjusted)                                           # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
+            if weight_adjusted:                                           # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
                 tf_map[token] += freq * FIELD_WEIGHTS[field]       
             else:                                                           # each token's term frequency is unaltered
                 tf_map[token] += freq   

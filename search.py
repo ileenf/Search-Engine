@@ -16,7 +16,6 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
 
     for word in query_words_set:
         if word not in index_of_tokens_to_postings:
-            print("word not in index")
             continue
         seek_position = index_of_tokens_to_postings[word]
         tokens_to_postings.seek(seek_position)
@@ -34,7 +33,6 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
         for posting in plist[0:num_postings_to_grab]:   
             posting = json.loads(posting)
             posting_id = posting['_docId']
-            print(posting["_token_count"])
             token_freq_map[posting_id] = posting['_token_count']
             doc_to_num_query_terms[posting_id] += 1
 
@@ -91,7 +89,7 @@ if __name__ == '__main__':
     index_of_doc_to_tf = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
     index_of_doc_to_tf_2grams = get_index_of_index('lexicons/index_of_doc_to_tf_2grams.txt')
 
-    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_main_index.txt')
+    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_inverted_index.txt')
     index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
@@ -130,7 +128,6 @@ if __name__ == '__main__':
                                             one_gram_intersection,
                                             index_of_doc_to_tf, 'auxiliary/doc_to_tf.txt'
                                             )
-            print(top_r_2grams)
             # merge them 
             top_k_doc_ids = get_k_largest(top_r_2grams + top_r_1grams, k)
             
