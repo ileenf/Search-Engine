@@ -76,7 +76,7 @@ def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_posi
     query_scores = query_ltc_ranking(query_words_count, doc_freq_map)
 
     # get weights of
-    doc_to_token_freq_file = open('unw_doc_to_tf.txt')
+    doc_to_token_freq_file = open('bookkeeping/unw_doc_to_tf.txt')
 
     for doc_id in doc_ids:
         # get weights of token of curr doc

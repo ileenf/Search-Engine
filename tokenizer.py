@@ -44,7 +44,7 @@ def parse_text(html: str) -> [str]:
                 tags_to_text['meta_content'].append(tokenized_text)
 
     two_grams = tokenize_two_grams(tags_to_text)
-    
+
     for tag, tokens in tags_to_text.items():
         concatenated_list = []
         for lst in tokens:
