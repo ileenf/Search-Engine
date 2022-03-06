@@ -56,7 +56,7 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
 
 def get_doc_id_to_url_map():
     doc_id_to_url = dict()
-    with open('id_url_map.txt') as file:
+    with open('bookkeeping/id_url_map.txt') as file:
         lines = file.readlines()
     for line in lines:
         line = line.split(':', 1)
@@ -83,11 +83,11 @@ def display_urls(posting_intersection, doc_id_to_url):
 
 if __name__ == '__main__':
     k = 10
-    doc_id_to_position = get_index_of_index('index_of_doc_to_tf.txt')
-    index_of_tokens_to_postings = get_index_of_index('index_of_main_index.txt')
-    index_of_two_grams = get_index_of_index('index_of_2_gram_index.txt')
-    tokens_to_postings = open('fixed_index.txt')
-    two_grams_to_postings = open('2gram_index.txt')
+    doc_id_to_position = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
+    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_main_index.txt')
+    index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
+    tokens_to_postings = open('indexes/tf_order_index.txt')
+    two_grams_to_postings = open('indexes/2gram_index.txt')
     doc_id_to_url = get_doc_id_to_url_map()
 
     query = input('Enter search: ')
