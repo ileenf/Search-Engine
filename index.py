@@ -37,7 +37,7 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
     cur_docID = 0
     inverted_index = defaultdict(list)              # <token: posting list>, where posting list is sorted in decreasing tf
     doc_to_tokens = dict()                          # <docID: <token: token frequency>>
-    two_grams_index = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
+    two_grams = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -47,11 +47,11 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                         cur_docID += 1
                         debug_print(f'{cur_docID}: {page.path}')
 
-                        if cur_docID > 5:
-                             return inverted_index, doc_to_tokens, two_grams_index
+                        if cur_docID > 30:
+                             return inverted_index, doc_to_tokens, two_grams
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        field_tf_map, two_grams = parse_text(content)  
+                        field_tf_map, two_grams_tokens = parse_text(content)  
 
                         all_tokens = set()                                  # set of all tokens in current doc
                         for tf_map in field_tf_map.values():
@@ -77,11 +77,11 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
 
                         debug_print(f'  two grams')
-                        two_gram_counts = Counter(two_grams)
+                        two_gram_counts = Counter(two_grams_tokens)
                         for two_gram, count in two_gram_counts.items():         # 2gram index
-                            two_grams_index[two_gram].append(Posting(cur_docID, count))
+                            two_grams[two_gram].append(Posting(cur_docID, count))
 
-    return inverted_index, doc_to_tokens, two_grams_index
+    return inverted_index, doc_to_tokens, two_grams
 
 def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
     with open(filename, 'w') as f:

@@ -54,7 +54,9 @@ def parse_text(html: str) -> [str]:
     return tags_to_text, two_grams
 
 def tokenize(string) -> [str]:
-    ''' given a string, returns list of tokens '''
+    '''
+    given a string, returns list of tokens
+    '''
     ps = PorterStemmer()
     tokens = []
     try:
@@ -63,6 +65,7 @@ def tokenize(string) -> [str]:
             tokens.append(ps.stem(word.lower()))     
         return tokens
 
+    # Catch Unicode errors
     except UnicodeDecodeError:
         return tokens
 
@@ -80,5 +83,4 @@ def tokenize_two_grams_from_list(token_list) -> [str]:
         two_gram = token_list[i] + token_list[i+1]
         two_grams.append(two_gram)
     return two_grams
-
 
