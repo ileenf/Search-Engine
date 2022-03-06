@@ -78,12 +78,14 @@ def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_posi
     for doc_id in doc_ids:
         # get weights of token of curr doc
         doc_term_weights = get_doc_to_tfwt(doc_id, doc_to_token_freq_file, doc_id_to_position)
+
         # gives mapping of tokens in document to score
         doc_scores = doc_lnc_ranking(query_words_count.keys(), doc_term_weights)
         total_score = 0
         for term in doc_scores:
             total_score += (query_scores[term] * doc_scores[term])
 
+        
         query_and_doc_ranking.append((total_score, doc_id))
     doc_to_token_freq_file.close()
     return query_and_doc_ranking
