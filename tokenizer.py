@@ -85,7 +85,7 @@ def tokenize_two_grams(field_tf_map) -> [str]:
     two_grams = []
     for field, list_of_lists in field_tf_map.items():
         for token_list in list_of_lists:
-            two_grams.append(tokenize_two_grams_from_list(token_list))
+            two_grams.extend(tokenize_two_grams_from_list(token_list))
     return two_grams
 
 
