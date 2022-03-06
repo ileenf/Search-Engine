@@ -47,13 +47,11 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                         cur_docID += 1
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        field_tf_map, two_grams = parse_text(content)                  # bsoup to parse html into a string of tokens
-                        
+                        field_tf_map, two_grams = parse_text(content)  
                         all_tokens = set()                                  # set of all tokens in current doc
                         for tf_map in field_tf_map.values():
-                                all_tokens.update(tf_map.keys()) 
+                            all_tokens.update(tf_map.keys()) 
 
-                        # inverted index
                         for token in all_tokens:         
                             weighted_count = 0
                             for field in FIELD_WEIGHTS:
@@ -61,26 +59,19 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                                     weighted_count += calc_field_weighted_tf(field_tf_map[field][token], field)
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
 
-                        # doc to tokens
                         tf_map = defaultdict(int)
-                        # for each token, collect the total term frequency across all of the fields it occurs in 
                         for field, field_to_tfs_counter in field_tf_map.items():
                             for token, freq in field_to_tfs_counter.items():
-                                if weight_adjusted:
-                                    # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
+                                if weight_adjusted:                                             # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
                                     tf_map[token] += calc_field_weighted_tf(freq, field)      
-                                else:
-                                    # each token's term frequency is unaltered
+                                else:                                                           # each token's term frequency is unaltered
                                     tf_map[token] += freq   
                         doc_to_tokens[cur_docID] = tf_map
-                        
-                        # 2 grams
+
                         two_gram_tokens = tokenize_two_grams(two_grams)
                         two_gram_counts = Counter(two_gram_tokens)
                         for two_gram, count in two_gram_counts.items():         # 2gram index
                             two_grams[two_gram].append(Posting(cur_docID, count))
-
-
     return inverted_index, doc_to_tokens, two_grams
 
 def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
@@ -95,7 +86,7 @@ def write_index_to_file(inverted_index: dict, index_file):
     file = open(index_file, 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
-        posting_string += f'{token}|{len(inverted_index[token])}| '                                       # token, termdocfreq:
+        posting_string += f'{token}|{len(inverted_index[token])}| '                                       
         for posting in sorted(inverted_index[token], key=(lambda p: (-p._token_count, p._docId))):        # sort posting list by descending tf
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
