@@ -4,7 +4,10 @@ from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k, get_k_largest
 import time
 
-def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_one_term):
+def get_url(docID, id_url_map):
+    return id_url_map[str(docID)].strip()
+
+def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_one_term, r=50):
     query_words_set = set(query_words)
 
     doc_freq_map = dict()
@@ -21,9 +24,13 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
         token = line[0]
         freq = line[1]
         posting_strs = line[2]
-
         doc_freq_map[token] = int(freq)
-        for posting in posting_strs.split('|'):
+        
+        plist = posting_strs.split('|')
+        num_postings_to_grab = min(r, len(plist))
+
+        # grab up to the top r highest tf for each query term
+        for posting in plist[0:num_postings_to_grab]:   
             posting = json.loads(posting)
             posting_id = posting['_docId']
             token_freq_map[posting_id] = posting['_token_count']
@@ -75,6 +82,8 @@ def display_urls(posting_intersection, doc_id_to_url):
         print(url.strip())
 
 
+
+
 if __name__ == '__main__':
     k = 10
     index_of_doc_to_tf = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
@@ -119,7 +128,6 @@ if __name__ == '__main__':
                                             one_gram_intersection,
                                             index_of_doc_to_tf, 'auxiliary/doc_to_tf.txt'
                                             )
-            print(top_r_2grams)
             # merge them 
             top_k_doc_ids = get_k_largest(top_r_2grams + top_r_1grams, k)
             
@@ -127,5 +135,3 @@ if __name__ == '__main__':
         print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
 
         query = input('Enter search: ')
-
-    tokens_to_postings.close()
