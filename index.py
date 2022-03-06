@@ -111,10 +111,8 @@ def index_of_index(index_path):
     index_file.close()
     return token_to_position
 
-def write_mapping_to_file(file_name, data_struct):
-    ''' write data from a relatively small in-memory data structure to a file
-        used for id_url_map and lexicons (seek indexes)
-    '''
-    with open(file_name, 'w') as index_file:
-        for term, value in data_struct.items():
+# use for id_url_map, and two seek indexes
+def write_mapping_to_file(file, index):
+    with open(file, 'w') as index_file:
+        for term, value in index.items():
             index_file.write(f'{term}|{value}\n')
