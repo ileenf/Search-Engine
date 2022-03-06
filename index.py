@@ -43,7 +43,7 @@ def build_index(base_dir: str):
                         cur_docID += 1
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        parsed_content, weighted_tags, two_grams = parse_text(content)                # bsoup to parse html into a string of tokens
+                        parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
                         tokens = tokenize(parsed_content)
                         token_mapping = Counter(tokens)
                         for token, count in token_mapping.items():          # inverted index
@@ -58,6 +58,11 @@ def build_index(base_dir: str):
                                 weighted_count += (weighted_tags['paragraph'][token] * paragraph_weight)
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
                         doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
+
+                        two_gram_tokens = tokenize_two_grams(tokens)
+                        two_gram_counts = Counter(two_gram_tokens)
+                        for two_gram, count in two_gram_counts.items():         # 2gram index
+                            two_grams[two_gram].append(Posting(cur_docID, count))
 
     return inverted_index, doc_to_tokens, two_grams
 
