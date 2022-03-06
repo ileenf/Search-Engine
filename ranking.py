@@ -21,10 +21,11 @@ def query_ltc_ranking(query_terms: dict, doc_freq_map: dict):
     normalized_scores = dict()
 
     for term, term_freq in query_terms.items():
-        term_freq_weight = 1 + math.log10(term_freq)
-        inverted_doc_freq = math.log10(55393/doc_freq_map[term])
-        score_weight = term_freq_weight * inverted_doc_freq
-        term_to_score[term] = score_weight
+        if term in doc_freq_map:
+            term_freq_weight = 1 + math.log10(term_freq)
+            inverted_doc_freq = math.log10(55393/doc_freq_map[term])
+            score_weight = term_freq_weight * inverted_doc_freq
+            term_to_score[term] = score_weight
 
     cosine_similarity = calculate_cosine_similarity(term_to_score.values())
     for term, score in term_to_score.items():
@@ -65,35 +66,29 @@ def get_k_largest(scores, k):
     heapq.heapify(scores)
     k_largest = heapq.nlargest(k, scores)
     k_largest_doc_ids = [ele[1] for ele in k_largest]
-
     return k_largest_doc_ids
 
-def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_position):
+def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_position, seekfile):
     query_and_doc_ranking = []
 
     # gets mapping of query term to score
     query_scores = query_ltc_ranking(query_words_count, doc_freq_map)
-
-    # get weights of
-    doc_to_token_freq_file = open('doc_to_tf.txt')
+    doc_to_token_freq_file = open(seekfile)
 
     for doc_id in doc_ids:
         # get weights of token of curr doc
         doc_term_weights = get_doc_to_tfwt(doc_id, doc_to_token_freq_file, doc_id_to_position)
+
         # gives mapping of tokens in document to score
         doc_scores = doc_lnc_ranking(query_words_count.keys(), doc_term_weights)
         total_score = 0
         for term in doc_scores:
             total_score += (query_scores[term] * doc_scores[term])
 
+        
         query_and_doc_ranking.append((total_score, doc_id))
-
     doc_to_token_freq_file.close()
-
-    # heapify mapping and get top k
-    k_largest_doc_ids = get_k_largest(query_and_doc_ranking, k)
-
-    return k_largest_doc_ids
+    return query_and_doc_ranking
 
 def tf_rank_top_k(doc_ids, token_freq_map, k):
     query_scores = []
