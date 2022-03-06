@@ -21,24 +21,18 @@ def parse_text(html: str) -> [str]:
     meta_text = soup.find_all(name="meta", attrs={"name": re.compile(r'^(author|description|keywords)$')})
 
     if header_tags_text:
-        # print("header tags======")
-        # print([t.text for t in header_tags_text])
         for t in header_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
                 tags_to_text['headers'].append(tokenized_text)
 
     if emphasis_tags_text:
-        # print("emphasis tags======")
-        # print([t.text for t in emphasis_tags_text])
         for t in emphasis_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
                 tags_to_text['emphasis'].append(tokenized_text)
 
     if text_tags_text:
-        # print("text tags======")
-        # print([t.text for t in text_tags_text])
         for t in text_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
@@ -52,10 +46,6 @@ def parse_text(html: str) -> [str]:
 
     two_grams = tokenize_two_grams(tags_to_text)
 
-    # print("\ntwo_grams =========")
-    # for x in two_grams:
-    #     print(f'    {x}: {two_grams[x]}\n')
-
     field_to_twograms_counter = defaultdict(list)
 
     for field, lst_of_twograms in two_grams.items():
@@ -67,11 +57,6 @@ def parse_text(html: str) -> [str]:
             concatenated_list.extend(lst)
         tags_to_text[field] = Counter(concatenated_list)
 
-    # print("\ntwo_grams_counter =========")
-    # for x in field_to_twograms_counter:
-    #     print(f'    {x}: {field_to_twograms_counter[x]}\n')
-
-    # two_grams and tags_to_text have the same structure:   <field: Counter<token: unweighted tf>>
     return tags_to_text, field_to_twograms_counter
 
 def tokenize(string) -> [str]:
@@ -92,12 +77,9 @@ def tokenize(string) -> [str]:
 
 def tokenize_two_grams(field_tf_map) -> 'dict(str: [str])':
     ''' returns <field: <list of two_grams>>'''
-    print('each tag on its own:')
     two_grams = defaultdict(list)
     for field, list_of_lists in field_tf_map.items():
-        #print('FIELD:  '+ field)
         for token_list in list_of_lists:
-            #print('\t'+ str(token_list))
             two_grams[field].extend(tokenize_two_grams_from_list(token_list))
             
     return two_grams
