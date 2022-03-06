@@ -10,6 +10,7 @@ def parse_text(html: str) -> [str]:
     ''' given an html string, pulls text from the following tags:
         <p>, <h1/2/3/4/5/6>, <strong>, <i>, <b>, <u>, <title>, <meta name="author"/"description"/"keywords">
     '''
+    parsed_str = ''
     tags_to_text = defaultdict(list)
 
     header_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "title"]
@@ -26,18 +27,21 @@ def parse_text(html: str) -> [str]:
         for t in header_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
+                parsed_str += t.text + ' '
                 tags_to_text['headers'].append(tokenized_text)
 
     if emphasis_tags_text:
         for t in emphasis_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
+                parsed_str += t.text + ' '
                 tags_to_text['emphasis'].append(tokenized_text)
 
     if text_tags_text:
         for t in text_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
+                parsed_str += t.text + ' '
                 tags_to_text['paragraph'].append(tokenized_text)
 
     if meta_text:
@@ -45,6 +49,7 @@ def parse_text(html: str) -> [str]:
             if m.has_attr("content") and m["content"].strip() != '':
                 tokenized_text = tokenize(m["content"])
                 tags_to_text['meta_content'] += tokenized_text
+                parsed_str += m["content"] + ' '
 
     two_grams = tokenize_two_grams(tags_to_text)
     
@@ -58,7 +63,7 @@ def parse_text(html: str) -> [str]:
     #                paragraph:    {every token that appeared in paragraphs: how many times it occurred},
     #                etc. }
 
-    return tags_to_text, two_grams
+    return parsed_str, tags_to_text, two_grams
 
 def tokenize(string) -> [str]:
     '''
