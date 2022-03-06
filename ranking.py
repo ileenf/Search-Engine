@@ -48,8 +48,6 @@ def doc_lnc_ranking(query_words, doc_term_weights)->"{str: int}":
         only calculates n'lized score for terms in query-doc intersection
         returns a dict of <token: n'lized score>
     '''
-    print("query words passed to doc_lnc:" + str(query_words))
-    print("doc_term_weights" + str(doc_term_weights))
     token_to_nlize = dict();
 
     # if wts was empty, eg there weren't any terms
@@ -60,13 +58,11 @@ def doc_lnc_ranking(query_words, doc_term_weights)->"{str: int}":
     doc_length = calculate_cosine_similarity(doc_term_weights.values())
     for term in doc_term_weights.keys():
         if term in query_words:
-            print("term is in query words")
             token_to_nlize[term] = doc_term_weights[term] / doc_length
 
     return token_to_nlize
 
 def get_k_largest(scores, k):
-    print(scores)
     heapq.heapify(scores)
     k_largest = heapq.nlargest(k, scores)
     k_largest_doc_ids = [ele[1] for ele in k_largest]
@@ -80,16 +76,13 @@ def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_posi
     doc_to_token_freq_file = open(seekfile)
 
     for doc_id in doc_ids:
-        print(doc_id)
         # get weights of token of curr doc
         doc_term_weights = get_doc_to_tfwt(doc_id, doc_to_token_freq_file, doc_id_to_position)
 
         # gives mapping of tokens in document to score
         doc_scores = doc_lnc_ranking(query_words_count.keys(), doc_term_weights)
-        print(doc_scores)
         total_score = 0
         for term in doc_scores:
-            print(f'    term = {term}, query_scores[term]={query_scores[term]}, doc_scores[term]={doc_scores[term]}')
             total_score += (query_scores[term] * doc_scores[term])
 
         
