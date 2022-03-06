@@ -1,9 +1,8 @@
-from collections import defaultdict, Counter
+from collections import defaultdict
 from Posting import Posting
-from tokenizer import parse_text, tokenize, tokenize_two_grams
+from tokenizer import parse_text
 import os
 import json
-import psutil
 import sys
 
 DEBUG = True
@@ -15,6 +14,11 @@ FIELD_WEIGHTS = {"headers": 2,
                 "meta_content": 1.75,
                 "emphasis": 1.5,
                 "paragraph": 1}
+
+DIRECTORY_ARR = ['indexes/inv_pindexes/', 'indexes/2gram_pindexes/']
+BASE_FILENAME_ARR = ['inverted_index', '2gram_index']
+
+#------------- Helper functions --------------#
 
 def get_all_tokens_from_field_tf_map(field_tf_map) -> set():
     ''' wtmap = <field: <token: unweighted tf>>    one of the two maps returned from parsed_content '''
@@ -57,22 +61,32 @@ def build_id_url_map(base_dir: str)->dict:
                         id_url_map[cur_docID] = json_data['url'] 
     return id_url_map
 
-<<<<<<< HEAD
-def build_pindexes(base_dir: str, batch_sz=100, mem_threshold=57, idx_size_threshold=1310824):
+def dump_if_over_threshold(index_type, actual_index, idx_docfirst_arr, cur_docID, idx_size_threshold=1310824):
+    # 0 = inv index, 1 = 2gram index
+    dumped = False
+    
+    idx_sz = sys.getsizeof(actual_index)
+
+    debug_print(f"Size of {'inverted_index' if index_type == 0 else '2gram_index'}: {idx_sz}")
+    if idx_sz > idx_size_threshold:
+        write_pindex_to_file(actual_index, DIRECTORY_ARR[index_type], BASE_FILENAME_ARR[index_type], 
+                             doc_first=idx_docfirst_arr[index_type], doc_last=cur_docID)
+
+        idx_docfirst_arr[index_type] = cur_docID + 1 # reset docfirst
+        dumped = True
+    return dumped
+
+#-------------- Main function -----------------------#
+def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False)->dict:
+    ''' simultaneously constructs inverted_index, doc_to_tokens, two_grams '''
     cur_batchsz = batch_sz
     cur_docID = 0
-    idx_docfirst = 1
-    
-    inverted_index = defaultdict(list)
-=======
-def build_index(base_dir: str, weight_adjusted=False)->dict:
-    ''' simultaneously constructs inverted_index, doc_to_tokens, two_grams '''
-    cur_docID = 0
+    idx_docfirst_arr = [1, 1]
+
     inverted_index = defaultdict(list)              # <token: posting list>, where posting list is sorted in decreasing tf
     doc_to_tokens = dict()                          # <docID: <token: token frequency>>
     two_grams = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
     doc_to_two_grams = dict()
->>>>>>> c06363cd257cfeb842d51bb11996aaaeacd73ded
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -85,43 +99,6 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                         if not inverted_index:
                             inverted_index = defaultdict(list)
                         cur_docID += 1
-<<<<<<< HEAD
-                        cur_batchsz -= 1
-                        debug_print(f'{cur_docID}: {page.path}')
-                        json_data = json.loads(file.read())
-                        content = json_data['content']
-                        parsed_content = parse_text(content)                                # bsoup to parse html into a string of tokens
-
-                        token_mapping = Counter(tokenize(parsed_content))
-                        total_tokens = sum(token_mapping.values())
-                        for token, count in token_mapping.items(): 
-                            inverted_index[token].append(Posting(cur_docID, count, total_tokens))
-                
-                # after parsing page, check if done with batch
-                if cur_batchsz <= 0:
-                    cur_batchsz = batch_sz
-                    idx_sz = sys.getsizeof(inverted_index) 
-                    debug_print(f'RAM % MEMORY USED: {psutil.virtual_memory()[2]}')
-                    debug_print(f"Size of inverted_index: {idx_sz}")
-
-                    # dump partial index to file
-                    if idx_sz > idx_size_threshold:                                                 
-                        write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
-                        inverted_index = None
-                        idx_docfirst = cur_docID + 1 # reset docfirst
-
-    # dump one last time
-    write_pindex(inverted_index, doc_first=idx_docfirst, doc_last=cur_docID)
-
-
-def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
-    ''' helper function to be called in build_pindexes'''
-    file = open(f'../rsrc/index{doc_first}-{doc_last}.txt', 'w')
-    posting_string = ''
-    for token in sorted(inverted_index):                                # sort by keys
-        posting_string += f'{token}|{len(inverted_index[token])}|'      # token, termdocfreq:
-        for posting in inverted_index[token]:
-=======
                         debug_print(f'{cur_docID}: {page.path}')
 
                         json_data = json.loads(file.read())
@@ -129,29 +106,51 @@ def write_pindex(inverted_index: dict, doc_first: int, doc_last: int):
                         field_tf_map, two_grams_field_tf_map = parse_text(content)  
 
                         all_tokens = get_all_tokens_from_field_tf_map(field_tf_map)
-
-                        debug_print(f'  doc to tokens')
+                        #----------------------------------------------------------------#
+                        debug_print(f'Appending to doc to tokens')
                         tf_map = calc_weighted_tf_by_doc(field_tf_map)  
                         doc_to_tokens[cur_docID] = tf_map
-
-                        debug_print(f'  doc to two grams')
+                        #----------------------------------------------------------------#
+                        debug_print(f'Appending to doc_to_tf_2grams')
                         # two grams needs a doc to two grams
                         tf_map = calc_weighted_tf_by_doc(two_grams_field_tf_map) 
                         doc_to_two_grams[cur_docID] = tf_map
-
-                        debug_print(f'  inv')
+                        #----------------------------------------------------------------#
+                        debug_print(f'Appending to inverted_index')
                         for token in all_tokens:         
                             weighted_count = calc_weighted_tf_by_token(token, field_tf_map)
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
-
-                        debug_print(f'  two grams')
+                        #----------------------------------------------------------------#
+                        debug_print(f'Appending to 2gram_index')
                         # two grams need to be weighted too
                         all_two_grams = get_all_tokens_from_field_tf_map(two_grams_field_tf_map)
                         for token in all_two_grams:
                             weighted_count = calc_weighted_tf_by_token(token, two_grams_field_tf_map)
                             two_grams[token].append(Posting(cur_docID, weighted_count))
+                        #----------------------------------------------------------------#
 
-    return inverted_index, doc_to_tokens, two_grams, doc_to_two_grams
+                        # after parsing page, check if done with batch 
+                        if cur_batchsz <= 0:
+                            cur_batchsz = batch_sz
+
+                            # check size of inverted index and dump
+                            dumped = dump_if_over_threshold(0, inverted_index, idx_docfirst_arr, cur_docID)
+                            if dumped:
+                                inverted_index = None
+
+                            dumped = dump_if_over_threshold(1, two_grams, idx_docfirst_arr, cur_docID)
+                            if dumped:
+                                two_grams = None
+    
+    # dump one last time
+    write_pindex_to_file(inverted_index, DIRECTORY_ARR[0], BASE_FILENAME_ARR[0], doc_first=idx_docfirst_arr[0], doc_last=cur_docID)
+    write_pindex_to_file(two_grams, DIRECTORY_ARR[1], BASE_FILENAME_ARR[1], doc_first=idx_docfirst_arr[1], doc_last=cur_docID)
+
+    return doc_to_tokens, doc_to_two_grams
+
+
+
+#----------------- Functions for writing to file -----------------#
 
 def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
     with open(filename, 'w') as f:
@@ -161,13 +160,12 @@ def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
             f.write('\n')
 
 # use for 'fixed_index.txt' and '2_gram_index'
-def write_index_to_file(inverted_index: dict, index_file):
-    file = open(index_file, 'w')
+def write_pindex_to_file(inverted_index, directory, index_filename, doc_first, doc_last):
+    file = open(f'{directory}{index_filename}{doc_first}-{doc_last}.txt', 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
         posting_string += f'{token}|{len(inverted_index[token])}| '                                       
         for posting in sorted(inverted_index[token], key=(lambda p: (-p._token_count, p._docId))):        # sort posting list by descending tf
->>>>>>> c06363cd257cfeb842d51bb11996aaaeacd73ded
             posting_json = json.dumps(posting.__dict__)
             posting_string += posting_json + '|'
         posting_string = posting_string.strip('|')
