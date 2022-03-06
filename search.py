@@ -50,7 +50,7 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
 
 def get_doc_id_to_url_map():
     doc_id_to_url = dict()
-    with open('bookkeeping/id_url_map.txt') as file:
+    with open('auxiliary/id_url_map.txt') as file:
         lines = file.readlines()
     for line in lines:
         line = line.split(':', 1)
@@ -111,13 +111,13 @@ if __name__ == '__main__':
             top_r_2grams = tfidf_rank_top_k(Counter(two_gram_query_words), k, 
                                             two_gram_freq_map,
                                             two_grams_intersection,
-                                            index_of_doc_to_tf_2grams, 'bookkeeping/doc_to_tf_2grams.txt'
+                                            index_of_doc_to_tf_2grams, 'auxiliary/doc_to_tf_2grams.txt'
                                             )
 
             top_r_1grams = tfidf_rank_top_k(Counter(query_words), k, 
                                             one_gram_freq_map,
                                             one_gram_intersection,
-                                            index_of_doc_to_tf, 'bookkeeping/doc_to_tf.txt'
+                                            index_of_doc_to_tf, 'auxiliary/doc_to_tf.txt'
                                             )
             print(top_r_2grams)
             # merge them 
