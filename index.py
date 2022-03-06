@@ -1,7 +1,7 @@
 from collections import defaultdict, Counter
 from pydoc import doc
 from Posting import Posting
-from tokenizer import parse_text, tokenize
+from tokenizer import parse_text, tokenize, tokenize_two_grams
 import os
 import json
 
@@ -22,7 +22,6 @@ def build_id_url_map(base_dir: str)->dict:
         if domain.is_dir():
             for page in os.scandir(domain.path):  # each file within subdir = webpage
                 if page.is_file():
-                    
                     with open(page.path) as file:
                         cur_docID += 1
                         json_data = json.loads(file.read())
@@ -30,10 +29,11 @@ def build_id_url_map(base_dir: str)->dict:
 
     return id_url_map
 
-def build_index(base_dir: str)->dict:
+def build_index(base_dir: str):
     cur_docID = 0
     inverted_index = defaultdict(list)
-    # doc_to_tokens = dict()
+    doc_to_tokens = dict()
+    two_grams = defaultdict(list)
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -41,12 +41,11 @@ def build_index(base_dir: str)->dict:
                 if page.is_file():
                     with open(page.path) as file:
                         cur_docID += 1
-                        # debug_print(f"{cur_docID}: {page.path}")
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
-                        token_mapping = Counter(tokenize(parsed_content))
-                        total_tokens = sum(token_mapping.values())
+                        tokens = tokenize(parsed_content)
+                        token_mapping = Counter(tokens)
                         for token, count in token_mapping.items():          # inverted index
                             weighted_count = 0
                             if weighted_tags['headers'] and token in weighted_tags['headers']:
@@ -57,13 +56,19 @@ def build_index(base_dir: str)->dict:
                                 weighted_count += (weighted_tags['emphasis'][token] * emphasis_weight)
                             if weighted_tags['paragraph'] and token in weighted_tags['paragraph']:
                                 weighted_count += (weighted_tags['paragraph'][token] * paragraph_weight)
-                            inverted_index[token].append(Posting(cur_docID, weighted_count, total_tokens))
-                        # doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
-    return inverted_index
-    # return doc_to_tokens
+                            inverted_index[token].append(Posting(cur_docID, weighted_count))
+                        doc_to_tokens[cur_docID] = token_mapping            # doc_id: token mapping
 
-def write_index_to_file(inverted_index: dict):
-    file = open('fixed_index.txt', 'w')
+                        two_gram_tokens = tokenize_two_grams(tokens)
+                        two_gram_counts = Counter(two_gram_tokens)
+                        for two_gram, count in two_gram_counts.items():         # 2gram index
+                            two_grams[two_gram].append(Posting(cur_docID, count))
+
+    return inverted_index, doc_to_tokens, two_grams
+
+# use for 'fixed_index.txt' and '2_gram_index'
+def write_index_to_file(inverted_index: dict, index_file):
+    file = open(index_file, 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                # sort by keys
         posting_string += f'{token}|{len(inverted_index[token])}| '     # token, termdocfreq:

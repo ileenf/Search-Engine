@@ -71,3 +71,13 @@ def tokenize(string) -> [str]:
     except UnicodeDecodeError:
         return tokens
 
+def tokenize_two_grams(token_list) -> [str]:
+    two_grams = []
+
+    for i in range(len(token_list)-1):
+        two_gram = token_list[i] + token_list[i+1]
+        two_grams.append(two_gram)
+
+    return two_grams
+
+
