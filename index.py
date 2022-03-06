@@ -32,20 +32,12 @@ def build_id_url_map(base_dir: str)->dict:
                         id_url_map[cur_docID] = json_data['url'] 
     return id_url_map
 
-def write_file_doc_to_tokens(doc_to_tokens, filename='doc_to_tokens.txt'):
-    with open(filename, 'w') as f:
-        for docID, tf_map in doc_to_tokens.items():
-            f.write(f'{docID}|')
-            f.write(json.dumps(tf_map))
-            f.write('\n')
-
 def build_index(base_dir: str, weight_adjusted=False)->dict:
     ''' simultaneously constructs inverted_index, doc_to_tokens, two_grams '''
     cur_docID = 0
     inverted_index = defaultdict(list)              # <token: posting list>, where posting list is sorted in decreasing tf
     doc_to_tokens = dict()                          # <docID: <token: token frequency>>
     two_grams = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
-
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -89,11 +81,18 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                             two_grams[two_gram].append(Posting(cur_docID, count))
 
 
-    return inverted_index
+    return inverted_index, doc_to_tokens, two_grams
+
+def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
+    with open(filename, 'w') as f:
+        for docID, tf_map in doc_to_tokens.items():
+            f.write(f'{docID}|')
+            f.write(json.dumps(tf_map))
+            f.write('\n')
 
 
-def write_index_to_file(inverted_index: dict, filename='fixed_index.txt'):
-    file = open(filename, 'w')
+def write_index_to_file(inverted_index: dict):
+    file = open('fixed_index.txt', 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
         posting_string += f'{token}|{len(inverted_index[token])}| '                                       # token, termdocfreq:
