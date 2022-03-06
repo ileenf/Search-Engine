@@ -70,19 +70,14 @@ def get_k_largest(scores, k):
     heapq.heapify(scores)
     k_largest = heapq.nlargest(k, scores)
     k_largest_doc_ids = [ele[1] for ele in k_largest]
-
-
-    return k_largest
     return k_largest_doc_ids
 
-def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_position):
+def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_position, seekfile):
     query_and_doc_ranking = []
 
     # gets mapping of query term to score
     query_scores = query_ltc_ranking(query_words_count, doc_freq_map)
-
-    # get weights of
-    doc_to_token_freq_file = open('bookkeeping/unw_doc_to_tf.txt')
+    doc_to_token_freq_file = open(seekfile)
 
     for doc_id in doc_ids:
         print(doc_id)
@@ -99,13 +94,8 @@ def tfidf_rank_top_k(query_words_count, k, doc_freq_map, doc_ids, doc_id_to_posi
 
         
         query_and_doc_ranking.append((total_score, doc_id))
-
     doc_to_token_freq_file.close()
-
-    # heapify mapping and get top k
-    k_largest_doc_ids = get_k_largest(query_and_doc_ranking, k)
-    
-    return k_largest_doc_ids
+    return query_and_doc_ranking
 
 def tf_rank_top_k(doc_ids, token_freq_map, k):
     query_scores = []
