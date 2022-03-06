@@ -14,9 +14,33 @@ FIELD_WEIGHTS = {"headers": 2,
                 "emphasis": 1.5,
                 "paragraph": 1}
 
-def calc_field_weighted_tf(orig_tf, field):
-    ''' given a tf for a token, return the adjusted term frequency (corresponds to the field in which the token occurred)'''
-    return orig_tf * FIELD_WEIGHTS[field]
+def get_all_tokens_from_field_tf_map(field_tf_map) -> set():
+    ''' wtmap = <field: <token: unweighted tf>>    one of the two maps returned from parsed_content '''
+    all_tkns = set()
+    for tf_map in field_tf_map.values():
+        all_tkns.update(tf_map.keys())
+    return all_tkns
+
+def calc_weighted_tf_by_doc(field_tf_map, weight_adjusted=False) -> dict():
+    ''' for each token, get its weight'''
+    tf_map = defaultdict(int)
+    for field, field_to_tfs_counter in field_tf_map.items():
+        for token, freq in field_to_tfs_counter.items():
+            if weight_adjusted:  
+                print(weight_adjusted)                                           # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
+                tf_map[token] += freq * FIELD_WEIGHTS[field]       
+            else:                                                           # each token's term frequency is unaltered
+                tf_map[token] += freq   
+    return tf_map
+
+def calc_weighted_tf_by_token(tkn, field_tf_map):
+    ''' for each doc, get its weight'''
+    weighted_count = 0
+    for field in FIELD_WEIGHTS:
+        if field in field_tf_map and tkn in field_tf_map[field]:
+            orig_weight = field_tf_map[field][tkn]
+            weighted_count +=  orig_weight * FIELD_WEIGHTS[field]
+    return weighted_count
 
 def build_id_url_map(base_dir: str)->dict:
     ''' auxiliary bookkeeping structure: <docID: url>'''
@@ -38,6 +62,7 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
     inverted_index = defaultdict(list)              # <token: posting list>, where posting list is sorted in decreasing tf
     doc_to_tokens = dict()                          # <docID: <token: token frequency>>
     two_grams = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
+    doc_to_two_grams = dict()
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -47,41 +72,34 @@ def build_index(base_dir: str, weight_adjusted=False)->dict:
                         cur_docID += 1
                         debug_print(f'{cur_docID}: {page.path}')
 
-                        if cur_docID > 30:
-                             return inverted_index, doc_to_tokens, two_grams
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        field_tf_map, two_grams_tokens = parse_text(content)  
+                        field_tf_map, two_grams_field_tf_map = parse_text(content)  
 
-                        all_tokens = set()                                  # set of all tokens in current doc
-                        for tf_map in field_tf_map.values():
-                            all_tokens.update(tf_map.keys()) 
+                        all_tokens = get_all_tokens_from_field_tf_map(field_tf_map)
 
                         debug_print(f'  doc to tokens')
-                        tf_map = defaultdict(int)
-                        
-                        for field, field_to_tfs_counter in field_tf_map.items():
-                            for token, freq in field_to_tfs_counter.items():
-                                if weight_adjusted:                                             # for each field, add the token's field-adjusted term frequency to the token's current total term frequency
-                                    tf_map[token] += calc_field_weighted_tf(freq, field)      
-                                else:                                                           # each token's term frequency is unaltered
-                                    tf_map[token] += freq   
+                        tf_map = calc_weighted_tf_by_doc(field_tf_map)  
                         doc_to_tokens[cur_docID] = tf_map
+
+                        debug_print(f'  doc to two grams')
+                        # two grams needs a doc to two grams
+                        tf_map = calc_weighted_tf_by_doc(two_grams_field_tf_map) 
+                        doc_to_two_grams[cur_docID] = tf_map
 
                         debug_print(f'  inv')
                         for token in all_tokens:         
-                            weighted_count = 0
-                            for field in FIELD_WEIGHTS:
-                                if field_tf_map[field] and token in field_tf_map[field]:
-                                    weighted_count += calc_field_weighted_tf(field_tf_map[field][token], field)
+                            weighted_count = calc_weighted_tf_by_token(token, field_tf_map)
                             inverted_index[token].append(Posting(cur_docID, weighted_count))
 
                         debug_print(f'  two grams')
-                        two_gram_counts = Counter(two_grams_tokens)
-                        for two_gram, count in two_gram_counts.items():         # 2gram index
-                            two_grams[two_gram].append(Posting(cur_docID, count))
+                        # two grams need to be weighted too
+                        all_two_grams = get_all_tokens_from_field_tf_map(two_grams_field_tf_map)
+                        for token in all_two_grams:
+                            weighted_count = calc_weighted_tf_by_token(token, two_grams_field_tf_map)
+                            two_grams[token].append(Posting(cur_docID, weighted_count))
 
-    return inverted_index, doc_to_tokens, two_grams
+    return inverted_index, doc_to_tokens, two_grams, doc_to_two_grams
 
 def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
     with open(filename, 'w') as f:
