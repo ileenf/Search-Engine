@@ -1,6 +1,6 @@
 from tokenizer import tokenize, tokenize_two_grams_from_list
 import json
-from collections import defaultdict, Counter
+from collections import Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k, get_k_largest
 import time
 
@@ -66,7 +66,6 @@ def get_doc_id_to_url_map():
         doc_id_to_url[doc_id] = url
     return doc_id_to_url
 
-
 def get_index_of_index(file):
     doc_id_to_position = dict()
     with open(file) as file:
@@ -80,9 +79,6 @@ def display_urls(posting_intersection, doc_id_to_url):
     for doc_id in posting_intersection:
         url = doc_id_to_url[str(doc_id)]
         print(url.strip())
-
-
-
 
 if __name__ == '__main__':
     k = 10
@@ -107,15 +103,13 @@ if __name__ == '__main__':
         else:
             two_gram_query_words = tokenize_two_grams_from_list(query_words)
             two_grams_intersection, two_gram_freq_map = search(two_gram_query_words, k, two_grams_to_postings, index_of_two_grams, False)
-            print('num two grams', len(two_grams_intersection))
 
             one_gram_intersection = []
             one_gram_freq_map = dict()
             if len(two_grams_intersection) < k:
                 one_gram_intersection, one_gram_freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, False)
                 one_gram_intersection = [docID for docID in one_gram_intersection if docID not in two_grams_intersection]
-                print('num one grams', len(posting_intersection))
-            
+
             # pass in both index_of_doc_to_tf
             top_r_2grams = tfidf_rank_top_k(Counter(two_gram_query_words), k, 
                                             two_gram_freq_map,
