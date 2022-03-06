@@ -10,14 +10,14 @@ def debug_print(s):
     if DEBUG:
         print(s)
 
+FIELD_WEIGHTS = {"headers": 2,
+                "meta_content": 1.75,
+                "emphasis": 1.5,
+                "paragraph": 1}
+
 def calc_field_weighted_tf(orig_tf, field):
     ''' given a tf for a token, return the adjusted term frequency (corresponds to the field in which the token occurred)'''
-    field_weights = {"headers": 2,
-                    "meta_content": 1.75,
-                    "emphasis": 1.5,
-                    "paragraph": 1}
-
-    return orig_tf * field_weights[field]
+    return orig_tf * FIELD_WEIGHTS[field]
 
 def build_id_url_map(base_dir: str)->dict:
     ''' auxiliary bookkeeping structure: <docID: url>'''
@@ -45,12 +45,12 @@ def build_doc_to_tokens_index(base_dir: str, weight_adjusted=False)->dict:
                 if page.is_file():
                     with open(page.path) as file:
                         cur_docID += 1
+                        debug_print(f"{cur_docID}: {page.path}")
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         field_tf_map = parse_text(content)                              
-                        tf_map = defaultdict()
-                        debug_print(f"{cur_docID}: {page.path}")
-
+                        tf_map = defaultdict(int)
+                        
                         # for each token, collect the total term frequency across all of the fields it occurs in 
                         for field, cur_field_tfs in field_tf_map.items():
                             for token, freq in cur_field_tfs.items():
@@ -60,10 +60,16 @@ def build_doc_to_tokens_index(base_dir: str, weight_adjusted=False)->dict:
                                 else:
                                     # each token's term frequency is unaltered
                                     tf_map[token] += freq   
-
                         doc_to_tokens[cur_docID] = tf_map
-                        tf_map.clear()               
+                                     
     return doc_to_tokens
+
+def write_file_doc_to_tokens(doc_to_tokens, filename='doc_to_tokens.txt'):
+    with open(filename, 'w') as f:
+        for docID, tf_map in doc_to_tokens.items():
+            f.write(f'{docID}|')
+            f.write(json.dumps(tf_map))
+            f.write('\n')
 
 def build_index(base_dir: str)->dict:
     ''' primary inverted index
@@ -85,20 +91,18 @@ def build_index(base_dir: str)->dict:
 
                         json_data = json.loads(file.read())
                         content = json_data['content']
-                        parsed_content, weighted_tags = parse_text(content)                # bsoup to parse html into a string of tokens
-                        tf_map = Counter(tokenize(parsed_content))
-                        total_tokens = sum(tf_map.values())
-                        for token in tf_map:          # inverted index
+                        field_tf_map = parse_text(content)                  # bsoup to parse html into a string of tokens
+                        
+                        all_tokens = set()                                  # set of all tokens in current doc
+                        for tf_map in field_tf_map.values():
+                                all_tokens.update(tf_map.keys()) 
+
+                        for token in all_tokens:         
                             weighted_count = 0
-                            if weighted_tags['headers'] and token in weighted_tags['headers']:
-                                weighted_count += (weighted_tags['headers'][token] * HEADER_WT)
-                            if weighted_tags['meta_content'] and token in weighted_tags['meta_content']:
-                                weighted_count += (weighted_tags['meta_content'][token] * META_CONTENT_WT)
-                            if weighted_tags['emphasis'] and token in weighted_tags['emphasis']:
-                                weighted_count += (weighted_tags['emphasis'][token] * EMPHASIS_WT)
-                            if weighted_tags['paragraph'] and token in weighted_tags['paragraph']:
-                                weighted_count += (weighted_tags['paragraph'][token] * P_WT)
-                            inverted_index[token].append(Posting(cur_docID, weighted_count, total_tokens))
+                            for field in FIELD_WEIGHTS:
+                                if field_tf_map[field] and token in field_tf_map[field]:
+                                    weighted_count += calc_field_weighted_tf(field_tf_map[field][token], field)
+                            inverted_index[token].append(Posting(cur_docID, weighted_count))
     return inverted_index
 
 
