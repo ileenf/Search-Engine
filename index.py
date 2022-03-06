@@ -86,9 +86,6 @@ def build_index(base_dir: str)->dict:
                         cur_docID += 1
                         # debug_print(f"{cur_docID}: {page.path}")
 
-                        if cur_docID > 20:
-                            return inverted_index
-
                         json_data = json.loads(file.read())
                         content = json_data['content']
                         field_tf_map = parse_text(content)                  # bsoup to parse html into a string of tokens
