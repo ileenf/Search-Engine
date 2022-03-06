@@ -27,33 +27,43 @@ def parse_text(html: str) -> [str]:
         for t in header_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['headers'] += tokenized_text
                 parsed_str += t.text + ' '
+                tags_to_text['headers'].append(tokenized_text)
 
     if emphasis_tags_text:
         for t in emphasis_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['emphasis'] += tokenized_text
                 parsed_str += t.text + ' '
+                tags_to_text['emphasis'].append(tokenized_text)
 
     if text_tags_text:
         for t in text_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
-                tags_to_text['paragraph'] += tokenized_text
                 parsed_str += t.text + ' '
+                tags_to_text['paragraph'].append(tokenized_text)
 
     if meta_text:
         for m in meta_text:
             if m.has_attr("content") and m["content"].strip() != '':
                 tokenized_text = tokenize(m["content"])
-                tags_to_text['meta_content'] += tokenized_text
+                tags_to_text['meta_content'].append(tokenized_text)
                 parsed_str += m["content"] + ' '
 
+    two_grams = tokenize_two_grams(tags_to_text)
+    
     for tag, tokens in tags_to_text.items():
-        tags_to_text[tag] = Counter(tokens)
-    return parsed_str, tags_to_text
+        concatenated_list = []
+        for lst in tokens:
+            concatenated_list.extend(lst)
+        tags_to_text[tag] = Counter(concatenated_list)
+
+    # tags_to_text: {meta_content: {every token that appeared in meta_content: how many times it occurred},
+    #                paragraph:    {every token that appeared in paragraphs: how many times it occurred},
+    #                etc. }
+
+    return parsed_str, tags_to_text, two_grams
 
 def tokenize(string) -> [str]:
     '''
@@ -71,9 +81,16 @@ def tokenize(string) -> [str]:
     except UnicodeDecodeError:
         return tokens
 
-def tokenize_two_grams(token_list) -> [str]:
+def tokenize_two_grams(field_tf_map) -> [str]:
     two_grams = []
+    for field, list_of_lists in field_tf_map.items():
+        for token_list in list_of_lists:
+            two_grams.append(tokenize_two_grams_from_list(token_list))
+    return two_grams
 
+
+def tokenize_two_grams_from_list(token_list) -> [str]:
+    two_grams = []
     for i in range(len(token_list)-1):
         two_gram = token_list[i] + token_list[i+1]
         two_grams.append(two_gram)
