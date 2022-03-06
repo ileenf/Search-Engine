@@ -48,7 +48,7 @@ def parse_text(html: str) -> [str]:
         for m in meta_text:
             if m.has_attr("content") and m["content"].strip() != '':
                 tokenized_text = tokenize(m["content"])
-                tags_to_text['meta_content'] += tokenized_text
+                tags_to_text['meta_content'].append(tokenized_text)
                 parsed_str += m["content"] + ' '
 
     two_grams = tokenize_two_grams(tags_to_text)
@@ -83,12 +83,17 @@ def tokenize(string) -> [str]:
 
 def tokenize_two_grams(field_tf_map) -> [str]:
     two_grams = []
-
     for field, list_of_lists in field_tf_map.items():
         for token_list in list_of_lists:
-          for i in range(len(token_list)-1):
-            two_gram = token_list[i] + token_list[i+1]
-            two_grams.append(two_gram)
+            two_grams.append(tokenize_two_grams_from_list(token_list))
+    return two_grams
+
+
+def tokenize_two_grams_from_list(token_list) -> [str]:
+    two_grams = []
+    for i in range(len(token_list)-1):
+        two_gram = token_list[i] + token_list[i+1]
+        two_grams.append(two_gram)
 
     return two_grams
 

@@ -1,4 +1,4 @@
-from tokenizer import tokenize, tokenize_two_grams
+from tokenizer import tokenize, tokenize_two_grams, tokenize_two_grams_from_list
 import json
 from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             posting_intersection, freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, True)
             top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
         else:
-            two_gram_query_words = tokenize_two_grams(query_words)
+            two_gram_query_words = tokenize_two_grams_from_list(query_words)
             two_grams_intersection, freq_map = search(two_gram_query_words, k, two_grams_to_postings, index_of_two_grams, False)
             print('num two grams', len(two_grams_intersection))
 
