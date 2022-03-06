@@ -7,7 +7,7 @@ import time
 def get_url(docID, id_url_map):
     return id_url_map[str(docID)].strip()
 
-def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_one_term, d, r=50):
+def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_one_term, r=50):
     query_words_set = set(query_words)
 
     doc_freq_map = dict()
@@ -26,25 +26,17 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
         freq = line[1]
         posting_strs = line[2]
         doc_freq_map[token] = int(freq)
-
-        print(f'doc freq = {freq}')
-
         
         plist = posting_strs.split('|')
         num_postings_to_grab = min(r, len(plist))
 
         # grab up to the top r highest tf for each query term
-        # counter
-        for posting in plist[0:num_postings_to_grab]: 
-            
+        for posting in plist[0:num_postings_to_grab]:   
             posting = json.loads(posting)
             posting_id = posting['_docId']
             print(posting["_token_count"])
-            print(f'doc:{posting_id}, {get_url(posting_id,d)}, tf:{posting["_token_count"]}')
             token_freq_map[posting_id] = posting['_token_count']
             doc_to_num_query_terms[posting_id] += 1
-
-        
 
     intersection = []
     for posting_id, count in doc_to_num_query_terms.items():
@@ -52,7 +44,6 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
             intersection.append(posting_id)
 
     if is_one_term:
-        print("ONE TERM")
         # token_freq_map: doc_id mapped to token count
         return intersection, token_freq_map
 
@@ -89,8 +80,9 @@ def get_index_of_index(file):
 
 def display_urls(posting_intersection, doc_id_to_url):
     for doc_id in posting_intersection:
-        url = doc_id_to_url[str(doc_id[1])]
-        print(str(doc_id) + url.strip())
+        url = doc_id_to_url[str(doc_id)]
+        print(url.strip())
+
 
 
 
@@ -103,15 +95,6 @@ if __name__ == '__main__':
     index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
-    doc_id_to_url = get_doc_id_to_url_map()
-
-if __name__ == '__main__':
-    k = 10
-    doc_id_to_position = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
-    index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_main_index.txt')
-    index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
-    tokens_to_postings = open('indexes/tf_order_index.txt')
-    two_grams_to_postings = open('indexes/tf_order_2gram_index.txt')
     doc_id_to_url = get_doc_id_to_url_map()
 
     query = input('Enter search: ')
@@ -154,3 +137,4 @@ if __name__ == '__main__':
         display_urls(top_k_doc_ids, doc_id_to_url)
         print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
 
+        query = input('Enter search: ')
