@@ -5,10 +5,10 @@ from tokenizer import parse_text, tokenize
 import os
 import json
 
-DEBUG = True
-def debug_print(s):
-    if DEBUG:
-        print(s)
+# DEBUG = True
+# def debug_print(s):
+#     if DEBUG:
+#         print(s)
 
 FIELD_WEIGHTS = {"headers": 2,
                 "meta_content": 1.75,
