@@ -26,11 +26,10 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, r=50
         
         plist = posting_strs.split('|')
         num_postings_to_grab = min(r, len(plist))
-        start_idx = 0
 
         # grab up to the top r highest tf for each query term
         # counter
-        for posting in plist[start_idx:num_postings_to_grab]: 
+        for posting in plist[0:num_postings_to_grab]: 
             posting = json.loads(posting)
             posting_id = posting['_docId']
             token_freq_map[posting_id] = posting['_token_count']
