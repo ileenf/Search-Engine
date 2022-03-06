@@ -1,4 +1,4 @@
-from tokenizer import tokenize, tokenize_two_grams, tokenize_two_grams_from_list
+from tokenizer import tokenize, tokenize_two_grams_from_list
 import json
 from collections import defaultdict, Counter
 from ranking import tf_rank_top_k, tfidf_rank_top_k
