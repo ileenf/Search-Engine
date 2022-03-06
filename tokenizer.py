@@ -14,12 +14,12 @@ def parse_text(html: str) -> [str]:
 
     header_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "title"]
     emphasis_tags = ["strong", "i", "b", "u"]
-    p_tags = ["p"]
+    text_tags = ["p", "div"]
     soup = BeautifulSoup(html, 'html.parser')
 
     header_tags_text = soup.find_all(header_tags)
     emphasis_tags_text = soup.find_all(emphasis_tags)
-    p_tags_text = soup.find_all(p_tags)
+    text_tags_text = soup.find_all(text_tags)
     meta_text = soup.find_all(name="meta", attrs={"name": re.compile(r'^(author|description|keywords)$')})
 
     if header_tags_text:
@@ -34,8 +34,8 @@ def parse_text(html: str) -> [str]:
                 tokenized_text = tokenize(t.text)
                 field_tf_map['emphasis'] += tokenized_text
 
-    if p_tags_text:
-        for t in p_tags_text:
+    if text_tags_text:
+        for t in text_tags_text:
             if t.text.strip() != '':
                 tokenized_text = tokenize(t.text)
                 field_tf_map['paragraph'] += tokenized_text
@@ -71,4 +71,14 @@ def tokenize(string) -> [str]:
     # Catch Unicode errors
     except UnicodeDecodeError:
         return tokens
+
+def tokenize_two_grams(token_list) -> [str]:
+    two_grams = []
+
+    for i in range(len(token_list)-1):
+        two_gram = token_list[i] + token_list[i+1]
+        two_grams.append(two_gram)
+
+    return two_grams
+
 

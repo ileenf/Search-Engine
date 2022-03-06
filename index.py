@@ -90,9 +90,9 @@ def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
             f.write(json.dumps(tf_map))
             f.write('\n')
 
-
-def write_index_to_file(inverted_index: dict):
-    file = open('fixed_index.txt', 'w')
+# use for 'fixed_index.txt' and '2_gram_index'
+def write_index_to_file(inverted_index: dict, index_file):
+    file = open(index_file, 'w')
     posting_string = ''
     for token in sorted(inverted_index):                                                                  # sort tokens alphabetically
         posting_string += f'{token}|{len(inverted_index[token])}| '                                       # token, termdocfreq:
