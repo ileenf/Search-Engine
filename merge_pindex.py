@@ -5,6 +5,84 @@ import re
 
 DEBUG = False
 
+def get_tf(cur_posting):
+    second_colon = False
+    for i in range(len(cur_posting)):
+        if cur_posting[i] == ':':
+            if second_colon:
+                break
+            second_colon = True 
+    # returns f' {int}'
+    return cur_posting[i+1:].strip('}')
+
+def get_docID(cur_posting):
+    return int(cur_posting[len('{_docId": '):].split(',')[0])
+
+
+def nway_merge_plists(posting_lists):
+    res = ''
+    
+    if DEBUG:
+        for num, l in enumerate(posting_lists):
+            print(f'{num} : {l}')
+
+    # ptrs[i] = info about the current posting in posting_list[i]
+    ptrs = {i: [0, get_tf(posting_lists[i][0])] for i in range(len(posting_lists))}            # ptrs[i][0] = the current posting index in posting_list[i]
+                                                                      # ptrs[i][1] = the tf for the current posting 
+    # for i in range(2):
+    while len(ptrs) > 1:
+        if DEBUG:
+            print('========= ptrs ==========')
+            for key, item in ptrs.items():
+                print(f'{key}   cur_index: {item[0]}, cur_posting: {item[1]}')
+            print()
+
+        # get the next min posting
+        max_plst = min(ptrs.keys())
+        max_tf = ptrs[max_plst][1]
+
+        for plist, info in ptrs.items():
+            cur_pindex, cur_tf = info[0], info[1]
+            if cur_tf == max_tf:
+                cur_docID = get_docID(posting_lists[plist][ptrs[plist][0]])
+                max_docID = get_docID(posting_lists[max_plst][ptrs[max_plst][0]])
+                _, max_tf, max_plst = min((cur_docID, cur_tf, plist), (max_docID, max_tf, max_plst))
+            elif float(cur_tf) > float(max_tf):
+                max_plst = plist
+                max_tf = cur_tf
+        
+        if DEBUG:
+            print(f'    Posting List with the min tf ({max_tf}): {max_plst}')
+            print()
+
+        # append min posting
+        res += posting_lists[max_plst][ptrs[max_plst][0]] + '|'
+
+        # advance pointer for that posting list
+        ptrs[max_plst][0] += 1
+        min_pindex = ptrs[max_plst][0]
+
+        # remove if pointer is beyond its array
+        if min_pindex > len(posting_lists[max_plst])-1:
+            del ptrs[max_plst]
+        else:
+            # pull out the tf from the posting list 
+            ptrs[max_plst][1] = get_tf(posting_lists[max_plst][min_pindex])
+
+    # merge the last one
+    last_plist = next(iter(ptrs))
+    start_index = ptrs[last_plist][0]
+
+    if DEBUG:
+        print("========== last_plist to merge: ===========")
+        print(f'{last_plist}: {posting_lists[last_plist][start_index:]}')
+    for posting in posting_lists[last_plist][start_index:]:
+        res += posting + '|'
+
+    return res[:-1]
+
+
+
 def get_next_token_and_docfreq(open_file):
     next_token = ''
     cur_char = open_file.read(1)
@@ -44,8 +122,6 @@ def merge_pindexes(base_dir, final_index_path):
         os.rename(opened_file_arr[0][0], final_index_path)
         return
 
-    # sort so that pindex files are in order of doc_id, for some reason scandir scans in an arbitrary order
-    opened_file_arr.sort(key=lambda a: a[0])
     pindex_count = len(opened_file_arr)       
 
     if DEBUG:
@@ -53,7 +129,6 @@ def merge_pindexes(base_dir, final_index_path):
         for f in opened_file_arr:
             print(f[0])
 
-    # cur_word_dict has to be sorted in order of fileno so that merging postings is easy (b/c each doc range is in order by fileno)
     cur_token_dict = OrderedDict()   # <fileno: cur_token>
     cur_docfreq_dict = dict()        # <cur_token: docfreq>
     final_index = open(final_index_path, 'w')
@@ -72,6 +147,7 @@ def merge_pindexes(base_dir, final_index_path):
             print()
 
     # continuously obtain the next set of cur_tokens -- break if only 1 file still has unmerged tokens
+    
     while len(cur_token_dict) > 1:
         if DEBUG:
             print(f'cur_token_dict = {cur_token_dict}')
@@ -104,13 +180,18 @@ def merge_pindexes(base_dir, final_index_path):
         # merge docfreq and posting lists -- from each opened file obj that contained the min_token, append its postings to the posting list
         merged_postingstr = ''
         merged_docfreq = 0
+        plists_to_merge = []
+        
         for f in mintoken_files:
             # add partial doc_freq to merged_docfreq
             merged_docfreq += cur_docfreq_dict[f]
-            open_file = opened_file_arr[f][1]
 
-            # append postings to merged posting list
-            merged_postingstr += open_file.readline().strip() + '|'
+            # get posting lists that need to be merged
+            open_file = opened_file_arr[f][1]
+            plists_to_merge.append(open_file.readline().strip().split('|'))
+
+            # # merge posting lists
+            # merged_postingstr += open_file.readline().strip() + '|'
 
             # advance the ptr, get to the next token (on the next line)
             next_token, next_doc_freq = get_next_token_and_docfreq(open_file)
@@ -125,10 +206,11 @@ def merge_pindexes(base_dir, final_index_path):
                 del cur_token_dict[f]
                 del cur_docfreq_dict[f]
 
-        if DEBUG:
-            print() 
+        merged_postingstr = nway_merge_plists(plists_to_merge)
 
-        final_index.write(str(merged_docfreq) + '|' + merged_postingstr[:-1] + '\n')
+        if DEBUG:
+            print(str(merged_docfreq) + '| ') 
+        final_index.write(str(merged_docfreq) + '| ' + merged_postingstr + '\n')
 
     # this shouldn't happen
     if len(cur_token_dict) > 1:
@@ -143,3 +225,38 @@ def merge_pindexes(base_dir, final_index_path):
         file.close()
     final_index.close()
 
+if __name__ == "__main__":
+
+    plist1 = '{"_docId": 1859, "_token_count": 3.1}'
+ 
+    plist2 = '{"_docId": 522, "_token_count": 10.9}|{"_docId": 930, "_token_count": 9}|{"_docId": 1092, "_token_count": 2}'
+    plist3 = '{"_docId": 3659, "_token_count": 10.9}|{"_docId": 4020, "_token_count": 4}'
+
+    lists_to_merge = []
+    lists_to_merge.append(plist1.strip().split('|'))
+    lists_to_merge.append(plist2.strip().split('|'))
+    lists_to_merge.append(plist3.strip().split('|'))
+    for l in lists_to_merge:
+        print(l)
+
+    print()
+
+
+    print('FINAL: ' + nway_merge_plists(lists_to_merge))
+
+    # plist1 = '{"_docId": 1859, "_token_count": 9}|{"_docId": 1092, "_token_count": 7}'
+ 
+    # plist2 = '{"_docId": 522, "_token_count": 10}|{"_docId": 930, "_token_count": 8}'
+    # plist3 = '{"_docId": 4020, "_token_count": 4}|{"_docId": 3659, "_token_count": 3}'
+
+    # lists_to_merge = []
+    # lists_to_merge.append(plist1.strip().split('|'))
+    # lists_to_merge.append(plist2.strip().split('|'))
+    # lists_to_merge.append(plist3.strip().split('|'))
+    # for l in lists_to_merge:
+    #     print(l)
+
+    # print()
+
+
+    # print('FINAL: ' + nway_merge_plists(lists_to_merge))
