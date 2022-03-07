@@ -2,22 +2,10 @@
 import os
 from collections import OrderedDict
 import re
+import json
 
 DEBUG = False
-
-def get_tf(cur_posting):
-    second_colon = False
-    for i in range(len(cur_posting)):
-        if cur_posting[i] == ':':
-            if second_colon:
-                break
-            second_colon = True 
-    # returns f' {int}'
-    return cur_posting[i+1:].strip('}')
-
-def get_docID(cur_posting):
-    return int(cur_posting[len('{_docId": '):].split(',')[0])
-
+TRACE = False
 
 def nway_merge_plists(posting_lists):
     res = ''
@@ -27,9 +15,9 @@ def nway_merge_plists(posting_lists):
             print(f'{num} : {l}')
 
     # ptrs[i] = info about the current posting in posting_list[i]
-    ptrs = {i: [0, get_tf(posting_lists[i][0])] for i in range(len(posting_lists))}            # ptrs[i][0] = the current posting index in posting_list[i]
-                                                                      # ptrs[i][1] = the tf for the current posting 
-    # for i in range(2):
+    ptrs = {i: [0, json.loads(posting_lists[i][0])['_token_count']] for i in range(len(posting_lists))}         # ptrs[i][0] = the current posting index in posting_list[i]
+                                                                                                                # ptrs[i][1] = the tf for the current posting 
+
     while len(ptrs) > 1:
         if DEBUG:
             print('========= ptrs ==========')
@@ -43,11 +31,13 @@ def nway_merge_plists(posting_lists):
 
         for plist, info in ptrs.items():
             cur_pindex, cur_tf = info[0], info[1]
+            # if tf ==, sort by docID
             if cur_tf == max_tf:
-                cur_docID = get_docID(posting_lists[plist][ptrs[plist][0]])
-                max_docID = get_docID(posting_lists[max_plst][ptrs[max_plst][0]])
-                _, max_tf, max_plst = min((cur_docID, cur_tf, plist), (max_docID, max_tf, max_plst))
-            elif float(cur_tf) > float(max_tf):
+                objcur = json.loads(posting_lists[plist][ptrs[plist][0]])
+                objmax = json.loads(posting_lists[plist][ptrs[plist][0]])
+                _, max_tf, max_plst = min((int(objcur['_docId']), cur_tf, plist), (int(objmax['_docId']), max_tf, max_plst))
+            # else, descending tf order
+            elif cur_tf > max_tf:
                 max_plst = plist
                 max_tf = cur_tf
         
@@ -66,8 +56,9 @@ def nway_merge_plists(posting_lists):
         if min_pindex > len(posting_lists[max_plst])-1:
             del ptrs[max_plst]
         else:
-            # pull out the tf from the posting list 
-            ptrs[max_plst][1] = get_tf(posting_lists[max_plst][min_pindex])
+            # pull out the tf from the posting list
+            obj = json.loads(posting_lists[max_plst][min_pindex]) 
+            ptrs[max_plst][1] = obj['_token_count']
 
     # merge the last one
     last_plist = next(iter(ptrs))
@@ -209,7 +200,11 @@ def merge_pindexes(base_dir, final_index_path):
         merged_postingstr = nway_merge_plists(plists_to_merge)
 
         if DEBUG:
-            print(str(merged_docfreq) + '| ') 
+            print(str(merged_docfreq) + '| ')
+        
+        # to let them see the progress
+        if TRACE:
+            print(f'writing {min_token} to file')
         final_index.write(str(merged_docfreq) + '| ' + merged_postingstr + '\n')
 
     # this shouldn't happen
@@ -227,27 +222,15 @@ def merge_pindexes(base_dir, final_index_path):
 
 if __name__ == "__main__":
 
-    plist1 = '{"_docId": 1859, "_token_count": 3.1}'
- 
-    plist2 = '{"_docId": 522, "_token_count": 10.9}|{"_docId": 930, "_token_count": 9}|{"_docId": 1092, "_token_count": 2}'
-    plist3 = '{"_docId": 3659, "_token_count": 10.9}|{"_docId": 4020, "_token_count": 4}'
+    plist1 = '{"_docId": 44984, "_token_count": 46}'
+    plista = '{"_docId": 14736, "_token_count": 46}'
+    objcur = json.loads(plist1)
+    objmax = json.loads(plista)
 
-    lists_to_merge = []
-    lists_to_merge.append(plist1.strip().split('|'))
-    lists_to_merge.append(plist2.strip().split('|'))
-    lists_to_merge.append(plist3.strip().split('|'))
-    for l in lists_to_merge:
-        print(l)
-
-    print()
-
-
-    print('FINAL: ' + nway_merge_plists(lists_to_merge))
-
-    # plist1 = '{"_docId": 1859, "_token_count": 9}|{"_docId": 1092, "_token_count": 7}'
- 
-    # plist2 = '{"_docId": 522, "_token_count": 10}|{"_docId": 930, "_token_count": 8}'
-    # plist3 = '{"_docId": 4020, "_token_count": 4}|{"_docId": 3659, "_token_count": 3}'
+    x= min((int(objcur['_docId']), objcur['_token_count']), (int(objmax['_docId']), objcur['_token_count']))
+    print(x)
+    # plist2 = '{"_docId": 522, "_token_count": 10.9}|{"_docId": 930, "_token_count": 9}|{"_docId": 1092, "_token_count": 2}'
+    # plist3 = '{"_docId": 3659, "_token_count": 10.9}|{"_docId": 4020, "_token_count": 4}'
 
     # lists_to_merge = []
     # lists_to_merge.append(plist1.strip().split('|'))
@@ -257,6 +240,4 @@ if __name__ == "__main__":
     #     print(l)
 
     # print()
-
-
     # print('FINAL: ' + nway_merge_plists(lists_to_merge))

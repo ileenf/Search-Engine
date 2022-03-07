@@ -6,9 +6,9 @@ import os
 import json
 import sys
 
-DEBUG = True
-def debug_print(s):
-    if DEBUG:
+TRACE = True
+def trace_print(s):
+    if TRACE:
         print(s)
 
 FIELD_WEIGHTS = {"headers": 2,
@@ -88,7 +88,7 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
                             two_grams = defaultdict(list)
                         cur_docID += 1
                         cur_batchsz -= 1
-                        debug_print(f'{cur_docID}: {page.path}')
+                        trace_print(f'{cur_docID}: {page.path}')
 
                         json_data = json.loads(file.read())
                         content = json_data['content']
@@ -119,11 +119,10 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
                             inv_idx_sz = sys.getsizeof(inverted_index)
                             twograms_idx_sz = sys.getsizeof(two_grams)
 
-                            debug_print(f"Size of inverted_index: {inv_idx_sz}")
-                            debug_print(f"Size of two_grams: {twograms_idx_sz}")
+                            # trace_print(f"Size of inverted_index: {inv_idx_sz}")
+                            # trace_print(f"Size of two_grams: {twograms_idx_sz}")
 
                             if inv_idx_sz > 2621552:
-                                print('WRITING')
                                 write_pindex_to_file(inverted_index, DIRECTORY_DICT['inv'], BASE_FILENAME_DICT['inv'], 
                                                     doc_first=idx_docfirst['inv'], doc_last=cur_docID)
 
@@ -131,7 +130,6 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
                                 inverted_index = None
 
                             if twograms_idx_sz > 20971624:
-                                # 20971624
                                 write_pindex_to_file(two_grams, DIRECTORY_DICT['2gram'], BASE_FILENAME_DICT['2gram'], 
                                                     doc_first=idx_docfirst['2gram'], doc_last=cur_docID)
 
@@ -151,6 +149,7 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
 #----------------- Functions for writing to file -----------------#
 
 def write_doc_to_tokens_file(doc_to_tokens, filename='doc_to_tokens.txt'):
+    trace_print('Building ' + filename)
     with open(filename, 'w') as f:
         for docID, tf_map in doc_to_tokens.items():
             f.write(f'{docID}| ')
@@ -189,6 +188,7 @@ def index_of_index(index_path):
 
 # use for id_url_map, and two seek indexes
 def write_mapping_to_file(file, index):
+    trace_print("Building " + file)
     with open(file, 'w') as index_file:
         for term, value in index.items():
             index_file.write(f'{term}|{value}\n')
