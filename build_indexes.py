@@ -21,11 +21,14 @@ if __name__ == '__main__':
         index.TRACE = True
         merge_pindex.TRACE = True
 
-    # # build inverted index and 2 gram index
-    doc_to_tokens, doc_to_two_grams = index.build_indexes(base_dir)
+    # build inverted index and 2 gram index
+    id_url_map, doc_to_tokens, doc_to_two_grams = index.build_indexes(base_dir)
     trace_print('Building indexes/inverted_index.txt, indexes/2gram_index.txt')
     merge_pindex.merge_pindexes(p_inv_basedir, 'indexes/inverted_index.txt')
     merge_pindex.merge_pindexes(p_2gram_basedir, 'indexes/2gram_index.txt')
+
+    # build id url map
+    index.write_mapping_to_file('auxiliary/id_url_map.txt', id_url_map)
 
     # build doc to tf index
     index.write_doc_to_tokens_file(doc_to_tokens, 'auxiliary/doc_to_tf.txt')
@@ -44,7 +47,3 @@ if __name__ == '__main__':
 
     mapping = index.index_of_index('auxiliary/doc_to_tf.txt')
     index.write_mapping_to_file('lexicons/index_of_doc_to_tf.txt', mapping)
-
-    # build id url map
-    mapping = index.build_id_url_map(base_dir)
-    index.write_mapping_to_file('auxiliary/id_url_map.txt', mapping)

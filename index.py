@@ -73,6 +73,7 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
     doc_to_tokens = dict()                          # <docID: <token: token frequency>>
     two_grams = defaultdict(list)                   # <token: posting list>, where token is a 2 gram (spaces removed)
     doc_to_two_grams = dict()
+    id_url_map = dict()
 
     for domain in os.scandir(base_dir):             # each subdir = web domain
         if domain.is_dir():
@@ -91,6 +92,7 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
                         trace_print(f'{cur_docID}: {page.path}')
 
                         json_data = json.loads(file.read())
+                        id_url_map[cur_docID] = json_data['url'] 
                         content = json_data['content']
                         field_tf_map, two_grams_field_tf_map = parse_text(content)  
 
@@ -142,7 +144,7 @@ def build_indexes(base_dir: str, batch_sz=100, weight_adjusted=False, idx_size_t
     write_pindex_to_file(two_grams, DIRECTORY_DICT['2gram'], BASE_FILENAME_DICT['2gram'], 
                                                     doc_first=idx_docfirst['2gram'], doc_last=cur_docID)
 
-    return doc_to_tokens, doc_to_two_grams
+    return id_url_map, doc_to_tokens, doc_to_two_grams
 
 
 

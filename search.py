@@ -1,6 +1,6 @@
 from tokenizer import tokenize, tokenize_two_grams_from_list
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from ranking import tf_rank_top_k, tfidf_rank_top_k, get_k_largest
 import time
 
@@ -60,7 +60,7 @@ def get_doc_id_to_url_map():
     with open('auxiliary/id_url_map.txt') as file:
         lines = file.readlines()
     for line in lines:
-        line = line.split(':', 1)
+        line = line.split('|', 1)
         doc_id = line[0]
         url = line[1]
         doc_id_to_url[doc_id] = url
@@ -90,6 +90,7 @@ if __name__ == '__main__':
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
     doc_id_to_url = get_doc_id_to_url_map()
+    print(doc_id_to_url)
 
     query = input('Enter search: ')
     while query != '':
