@@ -2,8 +2,8 @@ import index
 import merge_pindex
 
 base_dir = './DEV'
-p_inv_basedir = index.DIRECTORY_ARR[0]
-p_2gram_basedir = index.DIRECTORY_ARR[1]
+p_inv_basedir = index.DIRECTORY_DICT['inv']
+p_2gram_basedir = index.DIRECTORY_DICT['2gram']
 
 # build inverted index and 2 gram index
 doc_to_tokens, doc_to_two_grams = index.build_indexes(base_dir)

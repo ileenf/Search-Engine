@@ -30,13 +30,13 @@ def get_next_token_and_docfreq(open_file):
     return next_token, next_docfreq
 
 
-def merge_pindexes(base_dir, final_index_path='merged_index.txt'):
+def merge_pindexes(base_dir, final_index_path):
     # opened_file_arr[x] = (pathname, opened file object)
     opened_file_arr = []
 
     # iterate over directory and open all partial index files, add them to opened_file_arr
     for page in os.scandir(base_dir):  
-        if page.is_file() and re.match(r'.*index', page.path):                      # make sure that you only open correctly named files and not hidden files (.DSStore)
+        if page.is_file() and re.match(r'.*index', page.path) and not re.match(r'.*\.DS_Store', page.path):                      # make sure that you only open correctly named files and not hidden files (.DSStore)
             opened_file_arr.append((page.path, open(page.path, 'r', encoding="utf_8")))
 
     # stop early
