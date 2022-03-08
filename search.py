@@ -60,7 +60,7 @@ def get_doc_id_to_url_map():
     with open('auxiliary/id_url_map.txt') as file:
         lines = file.readlines()
     for line in lines:
-        line = line.split(':', 1)
+        line = line.split('|', 1)
         doc_id = line[0]
         url = line[1]
         doc_id_to_url[doc_id] = url
@@ -90,6 +90,7 @@ def initialize():
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
     doc_id_to_url = get_doc_id_to_url_map()
+    print(doc_id_to_url)
 
     return index_of_doc_to_tf, index_of_doc_to_tf_2grams, index_of_tokens_to_postings, index_of_two_grams, tokens_to_postings, two_grams_to_postings, doc_id_to_url
 

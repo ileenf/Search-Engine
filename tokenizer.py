@@ -92,4 +92,3 @@ def tokenize_two_grams_from_list(token_list) -> [str]:
         two_grams.append(two_gram)
 
     return two_grams
-
