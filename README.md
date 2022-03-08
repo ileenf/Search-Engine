@@ -1,9 +1,9 @@
 # Search-Engine
 ## Installation: 
 Use the python package manager pip to install nltk, BeautifulSoup, and Flask: 
-	```pip install nltk```
-	```pip install bs4```
-	```pip install Flask```
+	```pip install nltk
+	pip install bs4
+	pip install Flask```
 
 ## How to build the indexes:
 From the command line, run the following command in the main directory:
