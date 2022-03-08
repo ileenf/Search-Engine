@@ -10,8 +10,9 @@ Use the python package manager pip to install nltk, BeautifulSoup, and Flask:
 ## How to build the indexes:
 From the command line, run the following command in the main directory:
 
-	python3 build_indexes.py -trace
-	
+	python3 build_indexes.py [corpus_path] -trace
+
+corpus_path is the path to the /DEV folder.
 To view the build progress on the command line, use the “-trace” argument. 
 	
 
