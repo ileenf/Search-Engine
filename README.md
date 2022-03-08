@@ -6,6 +6,7 @@ Use the python package manager pip to install nltk, BeautifulSoup, and Flask:
 	pip install bs4
 	pip install Flask
 
+
 ## How to build the indexes:
 From the command line, run the following command in the main directory:
 
@@ -23,6 +24,7 @@ If using command line, run the following commands from the main directory:
 If using an IDE, run the app.py script.
 
 Go to http://127.0.0.1:5000/ or the link that is prompted in the terminal if different. 
+
 
 ## How to run a simple query:
 Type your query (ex: “uc irvine”) into the box under “Please enter a search query”. 
