@@ -1,25 +1,31 @@
 import index
 import merge_pindex
 import sys
+import os
 
 TRACE = False
 def trace_print(s):
     if TRACE:
         print(s)
 
-base_dir = './DEV'
 p_inv_basedir = index.DIRECTORY_DICT['inv']
 p_2gram_basedir = index.DIRECTORY_DICT['2gram']
 
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 3:
         print('only 1 extra argument should be provided')
         exit()
-    if len(sys.argv) == 2 and sys.argv[1] == '-trace':
+    base_dir = sys.argv[1]
+    if len(sys.argv) == 3 and sys.argv[2] == '-trace':
         index.TRACE = True
         merge_pindex.TRACE = True
+
+    os.makedirs('indexes/inv_pindexes/')
+    os.makedirs('indexes/2gram_pindexes/')
+    os.makedirs('auxiliary')
+    os.makedirs('lexicons')
 
     # build inverted index and 2 gram index
     id_url_map, doc_to_tokens, doc_to_two_grams = index.build_indexes(base_dir)
