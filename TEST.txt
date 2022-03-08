@@ -1,5 +1,9 @@
 Started poorly:
+<<<<<<< HEAD
     Efficiency (slow)
+=======
+Efficiency (slow)
+>>>>>>> fd0aefdf62172f6ed5d2243252ec4555f05f4cd0
     artificial intelligence
     UC Irvine
     Donald Bren
