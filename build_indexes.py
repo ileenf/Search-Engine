@@ -8,6 +8,7 @@ def trace_print(s):
     if TRACE:
         print(s)
 
+base_dir = './DEV'
 p_inv_basedir = index.DIRECTORY_DICT['inv']
 p_2gram_basedir = index.DIRECTORY_DICT['2gram']
 
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         print('only 1 extra argument should be provided')
         exit()
-    base_dir = sys.argv[1]
+    
     if len(sys.argv) == 3 and sys.argv[2] == '-trace':
         index.TRACE = True
         merge_pindex.TRACE = True
