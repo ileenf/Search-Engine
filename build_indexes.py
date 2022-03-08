@@ -15,7 +15,7 @@ p_2gram_basedir = index.DIRECTORY_DICT['2gram']
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 2:
         print('only 1 extra argument should be provided')
         exit()
     
