@@ -6,7 +6,7 @@ import os
 import json
 import sys
 
-TRACE = True
+TRACE = False
 def trace_print(s):
     if TRACE:
         print(s)
