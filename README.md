@@ -19,7 +19,6 @@ To view the build progress on the command line, use the “-trace” argument.
 ## How to start the search engine:
 If using command line, run the following commands from the main directory:
 
-	cd WebInterface
 	python3 app.py 
 
 If using an IDE, run the app.py script.
