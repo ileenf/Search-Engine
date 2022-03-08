@@ -1,5 +1,5 @@
 Started poorly:
-	Efficiency (slow)
+Efficiency (slow)
     artificial intelligence
     UC Irvine
     Donald Bren
