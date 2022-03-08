@@ -30,3 +30,8 @@ Go to http://127.0.0.1:5000/ or the link that is prompted in the terminal if dif
 Type your query (ex: “uc irvine”) into the box under “Please enter a search query”. 
 
 Press ENTER or click the Submit button. The top 10 results will be displayed in order of descending relevance in addition to the runtime. 
+
+## Contributors
+[@ileenf](https://github.com/ileenf)
+
+[@shridhar](https://github.com/sonashridhar)
