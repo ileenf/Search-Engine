@@ -1,5 +1,4 @@
 from collections import defaultdict
-from operator import invert
 from Posting import Posting
 from tokenizer import parse_text
 import os
