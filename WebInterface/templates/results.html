@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Sona and Ileen Search Engine</title>
+        <style>
+            .center {
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            button {
+              background-color: rgb(224,255,255);
+              font-size: 20px;
+              border-radius: 25px;
+            line-height: 40px;
+            }
+            .larger-text {
+                font-size: 20px;
+                line-height: 25px;
+            }
+            .query {
+                font-size: 30px;
+            }
+        </style>
+    </head>
+    <body class="center">
+        {% if query_term != "" %}
+            <h2><strong>Search Results For</strong></h2>
+            <p class="query"> {{query_term}}: </p>
+            <div>
+                {% for site in sites %}
+                    <a href = {{site}} target="_blank" class="larger-text">{{site}}</a>
+                    <br>
+                {%endfor%}
+                <p class="larger-text">---{{query_time}} milliseconds--</p>
+            </div>
+        {% else %}
+            <h1>Please enter a query!</h1>
+        {% endif %}
+        <a href = "http://127.0.0.1:5000/"><button>Back</button></a>
+    </body>
+</html>

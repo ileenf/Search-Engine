@@ -3,12 +3,46 @@
   <head>
     <meta charset="utf-8">
     <title>Sona and Ileen Search Engine</title>
+    <style>
+        .center {
+            width: 50%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1 {
+          font-size: 65px;
+        }
+        .search-bar {
+            width: 625px;
+            height: 40px;
+            border-radius: 20px;
+            font-size: 30px;
+        }
+        .button {
+          background-color: rgb(224,255,255);
+          font-size: 20px;
+          border-radius: 25px;
+          line-height: 40px;
+        }
+        footer {
+          padding-top: 80px;
+          font-size: 20px;
+          line-height: 10px;
+        }
+    </style>
   </head>
   <body>
-    <h1> Please enter a search query: </h1>
-    <form action="http://localhost:5000/results" method="post">
-        <p><input type = "text" name = "nm" /></p>
-        <p><input type = "submit" value = "submit" /></p
-    </form>
+    <div class="center">
+      <h1>CS 121 Search Engine</h1>
+      <h2> Please enter a search query: </h2>
+      <form action="http://localhost:5000/results" method="post">
+          <p><input type = "text" name = "nm" class="search-bar"/></p>
+          <p><input type = "submit" value = "Submit" class="button"/></p>
+      </form>
+    </div>
   </body>
+  <footer class="center">
+    <p>Built by Sona and Ileen</p>
+    <p>Winter 2022</p>
+  </footer>
 </html>

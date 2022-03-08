@@ -1,6 +1,6 @@
 from tokenizer import tokenize, tokenize_two_grams_from_list
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from ranking import tf_rank_top_k, tfidf_rank_top_k, get_k_largest
 import time
 
@@ -22,12 +22,12 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
         line = tokens_to_postings.readline()
         line = line.split('|', 2)
         token = line[0]
-        freq = line[1]
+        freq = int(line[1])
         posting_strs = line[2]
-        doc_freq_map[token] = int(freq)
-        
+        doc_freq_map[token] = freq
+
         plist = posting_strs.split('|')
-        num_postings_to_grab = min(r, len(plist))
+        num_postings_to_grab = min(r, freq)
 
         # grab up to the top r highest tf for each query term
         for posting in plist[0:num_postings_to_grab]:   
@@ -76,56 +76,58 @@ def get_index_of_index(file):
     return doc_id_to_position
 
 def display_urls(posting_intersection, doc_id_to_url):
+    urls = []
     for doc_id in posting_intersection:
         url = doc_id_to_url[str(doc_id)]
-        print(url.strip())
+        urls.append(url)
+    return urls
 
-if __name__ == '__main__':
-    k = 10
+def initialize():
     index_of_doc_to_tf = get_index_of_index('lexicons/index_of_doc_to_tf.txt')
     index_of_doc_to_tf_2grams = get_index_of_index('lexicons/index_of_doc_to_tf_2grams.txt')
-
     index_of_tokens_to_postings = get_index_of_index('lexicons/index_of_inverted_index.txt')
     index_of_two_grams = get_index_of_index('lexicons/index_of_2_gram_index.txt')
     tokens_to_postings = open('indexes/inverted_index.txt')
     two_grams_to_postings = open('indexes/2gram_index.txt')
     doc_id_to_url = get_doc_id_to_url_map()
 
-    query = input('Enter search: ')
-    while query != '':
-        
-        start_time = time.time()
-        query_words = tokenize(query)
+    return index_of_doc_to_tf, index_of_doc_to_tf_2grams, index_of_tokens_to_postings, index_of_two_grams, tokens_to_postings, two_grams_to_postings, doc_id_to_url
 
-        if len(query_words) == 1:
-            posting_intersection, freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, True)
-            top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
-        else:
-            two_gram_query_words = tokenize_two_grams_from_list(query_words)
-            two_grams_intersection, two_gram_freq_map = search(two_gram_query_words, k, two_grams_to_postings, index_of_two_grams, False)
+def run(query, index_of_doc_to_tf, index_of_doc_to_tf_2grams, index_of_tokens_to_postings,
+        index_of_two_grams, tokens_to_postings, two_grams_to_postings, doc_id_to_url):
+    k = 10
+    start_time = time.time()
+    query_words = tokenize(query)
 
-            one_gram_intersection = []
-            one_gram_freq_map = dict()
-            if len(two_grams_intersection) < k:
-                one_gram_intersection, one_gram_freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, False)
-                one_gram_intersection = [docID for docID in one_gram_intersection if docID not in two_grams_intersection]
+    if len(query_words) == 1:
+        posting_intersection, freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, True)
+        top_k_doc_ids = tf_rank_top_k(posting_intersection, freq_map, k)
+    else:
+        two_gram_query_words = tokenize_two_grams_from_list(query_words)
+        two_grams_intersection, two_gram_freq_map = search(two_gram_query_words, k, two_grams_to_postings, index_of_two_grams, False)
 
-            # pass in both index_of_doc_to_tf
-            top_r_2grams = tfidf_rank_top_k(Counter(two_gram_query_words), k, 
-                                            two_gram_freq_map,
-                                            two_grams_intersection,
-                                            index_of_doc_to_tf_2grams, 'auxiliary/doc_to_tf_2grams.txt'
-                                            )
+        one_gram_intersection = []
+        one_gram_freq_map = dict()
+        if len(two_grams_intersection) < k:
+            one_gram_intersection, one_gram_freq_map = search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, False)
+            one_gram_intersection = [docID for docID in one_gram_intersection if docID not in two_grams_intersection]
 
-            top_r_1grams = tfidf_rank_top_k(Counter(query_words), k, 
-                                            one_gram_freq_map,
-                                            one_gram_intersection,
-                                            index_of_doc_to_tf, 'auxiliary/doc_to_tf.txt'
-                                            )
-            # merge them 
-            top_k_doc_ids = get_k_largest(top_r_2grams + top_r_1grams, k)
-            
-        display_urls(top_k_doc_ids, doc_id_to_url)
-        print("--- %s milliseconds ---" % ((time.time() - start_time)*1000))
+        # pass in both index_of_doc_to_tf
+        top_r_2grams = tfidf_rank_top_k(Counter(two_gram_query_words), k,
+                                        two_gram_freq_map,
+                                        two_grams_intersection,
+                                        index_of_doc_to_tf_2grams, 'auxiliary/doc_to_tf_2grams.txt'
+                                        )
 
-        query = input('Enter search: ')
+        top_r_1grams = tfidf_rank_top_k(Counter(query_words), k,
+                                        one_gram_freq_map,
+                                        one_gram_intersection,
+                                        index_of_doc_to_tf, 'auxiliary/doc_to_tf.txt'
+                                        )
+        # merge them
+        top_k_doc_ids = get_k_largest(top_r_2grams + top_r_1grams, k)
+    urls = display_urls(top_k_doc_ids, doc_id_to_url)
+    total_query_time = ((time.time() - start_time)*1000)
+    print("--- %s milliseconds ---" % total_query_time)
+    return urls, total_query_time
+
