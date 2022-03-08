@@ -19,7 +19,7 @@ if __name__ == '__main__':
         print('only 1 extra argument should be provided')
         exit()
     
-    if len(sys.argv) == 3 and sys.argv[2] == '-trace':
+    if len(sys.argv) == 2 and sys.argv[1] == '-trace':
         index.TRACE = True
         merge_pindex.TRACE = True
 
