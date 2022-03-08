@@ -13,6 +13,7 @@ From the command line, run the following command in the main directory:
 	python3 build_indexes.py -trace
 
 To view the build progress on the command line, use the “-trace” argument. 
+
 Note: Ensure the corpus is a folder called 'DEV' located in the main directory. 
 	
 
