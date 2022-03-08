@@ -1,35 +1,35 @@
 Started poorly:
     Efficiency (slow)
-    artificial intelligence
-    UC Irvine
-    Donald Bren
-    Computer vision
-    Computer science
-    CS
+    - artificial intelligence
+    - UC Irvine
+    - Donald Bren
+    - Computer vision
+    - Computer science
+    - CS
 
     To make the above queries faster, we used champion lists to grab only top 50 postings with highest token freq. We also created lexicons ( index of index) to seek positions in indexes instead of going through each line.
 
     Effectiveness (content)
-    Machine learning
-    AI UCI
-    Schedule of classes
-    Databases
+    - Machine learning
+    - AI UCI
+    - Schedule of classes
+    - Databases
 
     To increase the quality of results for the queires above, we added weights to more important text (headers, titles, meta content) and added 2 gram indexing.
 
 Started well:
-    Michael Shindler
-    Pattis
-    ICS 33
-    Alex Thornton
-    Algorithm
-    Python
-    ICS clubs
-    Java programming assignment
-    CS 121
-    Iterative and recursive
-    Anteater
-    AI club
-    ACM UCI
-    Reddit
-    Why study CS
+    - Michael Shindler
+    - Pattis
+    - ICS 33
+    - Alex Thornton
+    - Algorithm
+    - Python
+    - ICS clubs
+    - Java programming assignment
+    - CS 121
+    - Iterative and recursive
+    - Anteater
+    - AI club
+    - ACM UCI
+    - Reddit
+    - Why study CS
