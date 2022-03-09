@@ -38,14 +38,14 @@ def search(query_words, k, tokens_to_postings, index_of_tokens_to_postings, is_o
 
     intersection = []
     for posting_id, count in doc_to_num_query_terms.items():
-        if count == len(query_words):
+        if count == len(query_words_set):
             intersection.append(posting_id)
 
     if is_one_term:
         # token_freq_map: doc_id mapped to token count
         return intersection, token_freq_map
 
-    curr_freq = len(query_words_set)
+    curr_freq = len(query_words_set) - 1
     while len(intersection) < k and curr_freq > 0:
         # can use doc_to_num_query_terms, since doc id is mapped to the number of tokens
         for doc_id, freq in doc_to_num_query_terms.items():
